@@ -1,15 +1,17 @@
 /**
- * Admin Panel - Simple user management
+ * Admin Panel - Enhanced with session timeout, validations, and security
  */
 
 class AdminPanel {
   constructor() {
     this.users = [];
     this.isAuthenticated = false;
-    this.adminPassword = "AdminGrade12";
+    this.adminPassword = process.env.ADMIN_PASSWORD || "AdminGrade12";
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     this.apiEndpoint = isLocal ? "http://localhost:3000/sync" : "/.netlify/functions/sync";
     this.autoRefreshInterval = null;
+    this.sessionTimeout = 15 * 60 * 1000; // 15 minutes
+    this.inactivityTimer = null;
     this.init();
   }
 
@@ -38,6 +40,7 @@ class AdminPanel {
     document.getElementById("adminRefreshBtn")?.addEventListener("click", () => this.loadUsers());
     document.getElementById("adminSearchInput")?.addEventListener("input", (e) => this.filterUsers(e.target.value));
     document.getElementById("adminExportBtn")?.addEventListener("click", () => this.exportUsersData());
+    document.getElementById("adminExportCSVBtn")?.addEventListener("click", () => this.exportCSV());
     document.getElementById("adminClearBtn")?.addEventListener("click", () => this.confirmClearAllData());
     const modal = document.getElementById("adminAuthModal");
     if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) this.closeLoginModal(); });
@@ -65,6 +68,10 @@ class AdminPanel {
 
   authenticate() {
     const password = document.getElementById("adminPasswordInput").value;
+    if (!password || password.trim() === "") {
+      this.notify("Please enter a password", "error");
+      return;
+    }
     if (password === this.adminPassword) {
       this.isAuthenticated = true;
       this.closeLoginModal();
@@ -72,37 +79,86 @@ class AdminPanel {
       document.getElementById("adminLoginBtn").classList.add("hidden");
       document.getElementById("adminLogoutBtn").classList.remove("hidden");
       this.startAutoRefresh();
+      this.startSessionTimeout();
       this.loadUsers();
-      this.notify("Admin access granted!", "success");
+      this.notify("Admin access granted! Auto-logout in 15 minutes.", "success");
     } else {
-      this.notify("Wrong password", "error");
+      this.notify("❌ Wrong password", "error");
       document.getElementById("adminPasswordInput").value = "";
     }
   }
 
   logout() {
-    this.isAuthenticated = false;
-    document.getElementById("adminSection").classList.add("hidden");
-    document.getElementById("adminLoginBtn").classList.remove("hidden");
-    document.getElementById("adminLogoutBtn").classList.add("hidden");
-    this.stopAutoRefresh();
-    this.notify("Logged out", "info");
+    if (confirm("Are you sure you want to logout?")) {
+      this.isAuthenticated = false;
+      document.getElementById("adminSection").classList.add("hidden");
+      document.getElementById("adminLoginBtn").classList.remove("hidden");
+      document.getElementById("adminLogoutBtn").classList.add("hidden");
+      this.stopAutoRefresh();
+      this.stopSessionTimeout();
+      this.notify("Logged out", "info");
+    }
+  }
+
+  startSessionTimeout() {
+    this.resetInactivityTimer();
+    window.addEventListener("mousemove", () => this.resetInactivityTimer());
+    window.addEventListener("keypress", () => this.resetInactivityTimer());
+    window.addEventListener("click", () => this.resetInactivityTimer());
+  }
+
+  stopSessionTimeout() {
+    if (this.inactivityTimer) clearTimeout(this.inactivityTimer);
+  }
+
+  resetInactivityTimer() {
+    if (!this.isAuthenticated) return;
+    if (this.inactivityTimer) clearTimeout(this.inactivityTimer);
+    this.inactivityTimer = setTimeout(() => {
+      this.notify("⏰ Session expired. Auto-logged out.", "warning");
+      this.logout();
+    }, this.sessionTimeout);
   }
 
   async loadUsers() {
+    this.showLoader(true);
     try {
-      const response = await fetch(`${this.apiEndpoint}?action=getAllUsers`, { timeout: 5000 });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(`${this.apiEndpoint}?action=getAllUsers`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
       if (response.ok) {
         const data = await response.json();
-        this.users = Array.isArray(data) ? data : [];
+        this.users = Array.isArray(data.users) ? data.users : [];
         this.renderTable();
+        this.notify("✅ Users loaded", "success");
       } else {
         this.loadFromLocalStorage();
         this.renderTable();
+        this.notify("⚠️ Using local data", "warning");
       }
     } catch (error) {
+      console.error("Load error:", error);
       this.loadFromLocalStorage();
       this.renderTable();
+      this.notify("❌ Using cached data", "error");
+    } finally {
+      this.showLoader(false);
+    }
+  }
+
+  showLoader(show = true) {
+    let loader = document.getElementById("adminLoader");
+    if (!loader && show) {
+      loader = document.createElement("div");
+      loader.id = "adminLoader";
+      loader.className = "loader-overlay active";
+      loader.innerHTML = '<div class="loader-content"><div class="loader"></div><p>Loading...</p></div>';
+      document.body.appendChild(loader);
+    } else if (loader) {
+      loader.classList.toggle("active", show);
     }
   }
 
@@ -116,8 +172,9 @@ class AdminPanel {
         const settings = JSON.parse(localStorage.getItem(`userSettings_${userId}`) || '{"name":"Unknown"}');
         const activities = Object.values(progressData || {}).filter(a => a.completed).length;
         const score = Object.values(progressData || {}).reduce((s, a) => s + (a.score || 0), 0);
+        const lastLogin = localStorage.getItem(`lastLogin_${userId}`) || null;
         this.users.push({
-          userId, name: settings.name || userId, activities, score, syncStatus: "local", timestamp: new Date().toISOString()
+          userId, name: settings.name || userId, activities, score, syncStatus: "local", timestamp: new Date().toISOString(), lastLogin
         });
       }
     }
@@ -135,7 +192,7 @@ class AdminPanel {
         <td class="px-4 py-2">${user.name}</td>
         <td class="px-4 py-2">${user.score || 0}</td>
         <td class="px-4 py-2">${user.activities || 0}</td>
-        <td class="px-4 py-2">${this.timeAgo(user.timestamp)}</td>
+        <td class="px-4 py-2" title="${user.lastLogin || 'Never'}">${this.timeAgo(user.lastLogin || user.timestamp)}</td>
         <td class="px-4 py-2 admin-sync-status">${user.syncStatus === "local" ? "📱 Local" : "✅ Synced"}</td>
         <td class="px-4 py-2"><button onclick="adminPanel.deleteUser('${user.userId}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Delete</button></td>
         <td class="px-4 py-2"><button onclick="adminPanel.viewUser('${user.userId}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">View</button></td>
@@ -161,12 +218,17 @@ class AdminPanel {
   }
 
   deleteUser(userId) {
-    if (!confirm(`Delete user ${userId}?`)) return;
+    const user = this.users.find(u => u.userId === userId);
+    if (!user) return;
+    
+    if (!confirm(`⚠️ Delete user "${user.name}"? This cannot be undone!`)) return;
+    if (!confirm("Are you absolutely sure?")) return;
+    
     localStorage.removeItem(`activityProgress_${userId}`);
     localStorage.removeItem(`userSettings_${userId}`);
     this.users = this.users.filter(u => u.userId !== userId);
     this.renderTable();
-    this.notify("User deleted", "success");
+    this.notify("✅ User deleted", "success");
   }
 
   viewUser(userId) {
@@ -182,19 +244,54 @@ class AdminPanel {
     a.href = url;
     a.download = `users_${new Date().getTime()}.json`;
     a.click();
-    this.notify("Data exported", "success");
+    this.notify("✅ JSON exported", "success");
+  }
+
+  exportCSV() {
+    if (this.users.length === 0) {
+      this.notify("❌ No users to export", "warning");
+      return;
+    }
+
+    const headers = ["Name", "Score", "Activities Completed", "Last Login", "Created Date"];
+    const rows = this.users.map(u => [
+      `"${u.name}"`,
+      u.score || 0,
+      u.activities || 0,
+      u.lastLogin || u.timestamp || "Never",
+      u.timestamp || "Unknown"
+    ]);
+
+    const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `users_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    this.notify("✅ CSV exported", "success");
   }
 
   confirmClearAllData() {
-    if (confirm("Delete all user data? This cannot be undone.")) {
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (key.startsWith("activityProgress_") || key.startsWith("userSettings_")) localStorage.removeItem(key);
-      }
-      this.users = [];
-      this.renderTable();
-      this.notify("All data cleared", "success");
+    if (!confirm("⚠️ Delete ALL user data? This cannot be undone!")) return;
+    if (!confirm("Are you ABSOLUTELY sure? Type YES in the next prompt.")) return;
+    
+    const response = prompt("Type 'DELETE ALL' to confirm:");
+    if (response === "DELETE ALL") {
+      this.clearAllData();
+    } else {
+      this.notify("❌ Cancelled", "info");
     }
+  }
+
+  clearAllData() {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key.startsWith("activityProgress_") || key.startsWith("userSettings_")) localStorage.removeItem(key);
+    }
+    this.users = [];
+    this.renderTable();
+    this.notify("✅ All data cleared", "success");
   }
 
   startAutoRefresh() {
@@ -228,11 +325,14 @@ class AdminPanel {
 
   notify(msg, type = "info") {
     const el = document.createElement("div");
-    el.className = `fixed top-4 right-4 px-4 py-2 rounded text-white notification-${type}`;
+    el.className = `fixed top-4 right-4 px-4 py-2 rounded text-white admin-toast admin-toast-${type}`;
     el.textContent = msg;
-    el.style.backgroundColor = type === "success" ? "#4CAF50" : type === "error" ? "#f44336" : "#2196F3";
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3000);
+    setTimeout(() => el.classList.add("admin-toast-show"), 10);
+    setTimeout(() => {
+      el.classList.remove("admin-toast-show");
+      setTimeout(() => el.remove(), 300);
+    }, 3000);
   }
 }
 

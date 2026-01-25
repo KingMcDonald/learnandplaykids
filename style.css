@@ -3951,6 +3951,56 @@ select {
   background: #2196f3;
 }
 
+.admin-toast-warning {
+  background: #ff9800;
+}
+
+/* Loading Spinner */
+.loader {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+.loader-overlay.active {
+  display: flex;
+}
+
+.loader-content {
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.loader-content p {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #333;
+}
+
 /* Animations */
 @keyframes slideUp {
   from {

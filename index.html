@@ -30,7 +30,7 @@
     <!-- ==================== START SCREEN ==================== -->
     <div id="startScreen" class="screen">
       <div class="container">
-        <h1 class="title" id="appTitle" style="cursor: pointer;">Garden Learn & Play</h1>
+        <h1 class="title">Garden Learn & Play</h1>
         <p class="subtitle">Help your plant grow by learning & playing!</p>
         <div class="name-input-box">
           <label for="userName">What's your name?</label>
@@ -40,8 +40,11 @@
             class="name-input"
             placeholder="Enter your name"
             maxlength="20"
+            pattern="[A-Za-z\s]+"
+            title="Name can only contain letters and spaces"
             onkeypress="if (event.key === 'Enter') game.startGame();"
           />
+          <small id="nameError" style="color: red; display: none;">Please enter a valid name (letters only)</small>
         </div>
         <button class="main-btn start-btn" onclick="game.startGame()">
           START PLAY
@@ -186,7 +189,7 @@
 
         <h3>Your Progress & Features:</h3>
         <div class="streak-pet-display">
-          <div class="streak-box">
+          <div class="streak-box" id="appTitle" style="cursor: pointer;">
             🔥 <span id="streakCounter">0</span> Days
           </div>
         </div>
@@ -349,7 +352,8 @@
         </div>
         <div class="admin-buttons">
           <button id="adminRefreshBtn" class="admin-btn-small">🔄 Refresh</button>
-          <button id="adminExportBtn" class="admin-btn-small">📥 Export</button>
+          <button id="adminExportBtn" class="admin-btn-small">📥 JSON</button>
+          <button id="adminExportCSVBtn" class="admin-btn-small">📊 CSV</button>
           <button id="adminClearBtn" class="admin-btn-small admin-btn-danger">🗑️ Clear All</button>
         </div>
       </div>

@@ -55,6 +55,7 @@ class OfflineSyncManager {
 
       if (response.ok) {
         console.log(`✅ Synced: ${userId}`);
+        localStorage.setItem(`lastLogin_${userId}`, new Date().toISOString());
         this.showNotification("✅ Progress synced!", "success");
       }
     } catch (error) {
