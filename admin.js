@@ -6,7 +6,7 @@ class AdminPanel {
   constructor() {
     this.users = [];
     this.isAuthenticated = false;
-    this.adminPassword = process.env.ADMIN_PASSWORD || "AdminGrade12";
+    this.adminPassword = "AdminGrade12"; // Hardcoded password for browser
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     this.apiEndpoint = isLocal ? "http://localhost:3000/sync" : "/.netlify/functions/sync";
     this.autoRefreshInterval = null;
