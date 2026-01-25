@@ -236,11 +236,20 @@ class AdminPanel {
   loadFromLocalStorage() {
     this.users = [];
     console.log("📁 Scanning localStorage for user data...");
+    console.log(`📊 Total localStorage keys: ${localStorage.length}`);
     
+    // First, let's log all keys to understand what's stored
+    const allKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      allKeys.push(localStorage.key(i));
+    }
+    console.log("🔑 All localStorage keys:", allKeys);
+    
+    // Now look for activity progress keys
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       
-      if (key.startsWith("activityProgress_")) {
+      if (key && key.startsWith("activityProgress_")) {
         const userId = key.replace("activityProgress_", "");
         try {
           const progressData = JSON.parse(localStorage.getItem(key)) || {};
@@ -254,16 +263,17 @@ class AdminPanel {
           this.users.push({
             userId,
             name: settings.name || "Unknown Player",
-            activities,
-            score,
+            activities: progressData.sessionCount || activities,
+            score: progressData.score || score,
             syncStatus: "local",
             timestamp: new Date().toISOString(),
-            lastLogin
+            lastLogin,
+            plantStage: progressData.plantStage || 0
           });
           
-          console.log(`✅ Found user: ${settings.name} (${userId}) - Score: ${score}, Activities: ${activities}`);
+          console.log(`✅ Found user: ${settings.name} (${userId}) - Score: ${progressData.score || score}, Activities: ${progressData.sessionCount || activities}`);
         } catch (err) {
-          console.error(`❌ Error parsing user data for ${userId}:`, err);
+          console.error(`❌ Error parsing user data for ${userId}:`, err, localStorage.getItem(key));
         }
       }
     }
@@ -271,6 +281,18 @@ class AdminPanel {
     console.log(`📊 Total users found: ${this.users.length}`);
     if (this.users.length === 0) {
       console.warn("⚠️ No users found in localStorage. Users need to play at least one activity first.");
+      // Additional debugging: check for kg_ prefixed keys (old format)
+      const legacyKeys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("kg_")) {
+          legacyKeys.push(key);
+        }
+      }
+      if (legacyKeys.length > 0) {
+        console.warn("⚠️ Found legacy game keys:", legacyKeys);
+        console.warn("💡 Try playing an activity to save in admin-compatible format");
+      }
     }
   }
 

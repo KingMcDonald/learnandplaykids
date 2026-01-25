@@ -1730,9 +1730,11 @@ class KindergartenGame {
 
   saveGameState() {
     if (!this.userName) return;
-    const key = `kg_${this.hashUsername(this.userName)}`;
+    
+    // Save in game format (existing)
+    const gameKey = `kg_${this.hashUsername(this.userName)}`;
     localStorage.setItem(
-      key,
+      gameKey,
       JSON.stringify({
         userName: this.userName,
         score: this.score,
@@ -1743,14 +1745,55 @@ class KindergartenGame {
         stats: this.stats,
       }),
     );
+    
+    // IMPORTANT: Also save in admin-compatible format so admin panel can find users
+    const userId = this.hashUsername(this.userName); // Use same hash as userId
+    
+    // Save activity progress for admin panel
+    localStorage.setItem(
+      `activityProgress_${userId}`,
+      JSON.stringify({
+        completed: true,
+        score: this.score,
+        timestamp: new Date().toISOString(),
+        plantStage: this.plantStage,
+        achievements: this.achievements,
+        sessionCount: (this.sessionData || []).length
+      })
+    );
+    
+    // Save user settings for admin panel
+    localStorage.setItem(
+      `userSettings_${userId}`,
+      JSON.stringify({
+        name: this.userName,
+        createdAt: localStorage.getItem(`userCreated_${userId}`) || new Date().toISOString(),
+        theme: this.theme,
+        soundEnabled: this.soundEnabled
+      })
+    );
+    
+    // Track last login time
+    localStorage.setItem(`lastLogin_${userId}`, new Date().toISOString());
+    
+    // Track user creation time (only set once)
+    if (!localStorage.getItem(`userCreated_${userId}`)) {
+      localStorage.setItem(`userCreated_${userId}`, new Date().toISOString());
+    }
+    
+    console.log(`💾 Game saved for ${this.userName} (ID: ${userId})`);
   }
 
   loadSavedProgress() {
     if (!this.userName) return false;
-    const key = `kg_${this.hashUsername(this.normalizeUsername(this.userName))}`;
+    const userId = this.hashUsername(this.normalizeUsername(this.userName));
+    const key = `kg_${userId}`;
     const saved = localStorage.getItem(key);
 
-    if (!saved) return false;
+    if (!saved) {
+      console.log(`📭 No saved progress found for ${this.userName}`);
+      return false;
+    }
 
     try {
       const data = JSON.parse(saved);
@@ -1760,8 +1803,11 @@ class KindergartenGame {
       this.streak = data.streak || 0;
       this.achievements = data.achievements || this.loadAchievements();
       this.stats = data.stats || this.loadStats();
+      
+      console.log(`✅ Loaded saved progress for ${this.userName}: Score=${this.score}, Plant=${this.plantStage}`);
       return true;
     } catch (e) {
+      console.error(`❌ Error loading progress for ${this.userName}:`, e);
       return false;
     }
   }

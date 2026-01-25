@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel Test - User Data Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #333;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px 5px 5px 0;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+    .button-danger {
+      background: #ef4444;
+    }
+    .button-danger:hover {
+      background: #dc2626;
+    }
+    .button-success {
+      background: #10b981;
+    }
+    .button-success:hover {
+      background: #059669;
+    }
+    .output {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .success { color: #059669; font-weight: bold; }
+    .error { color: #dc2626; font-weight: bold; }
+    .warning { color: #d97706; font-weight: bold; }
+    .info { color: #0891b2; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    th {
+      background: #f3f4f6;
+      font-weight: bold;
+    }
+    .user-data {
+      background: #f0fdf4;
+      padding: 10px;
+      margin: 5px 0;
+      border-left: 3px solid #10b981;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Admin Panel User Data Test Suite</h1>
+  
+  <div class="test-section">
+    <h2>📊 Current localStorage Status</h2>
+    <button class="button-success" onclick="checkLocalStorage()">Check Current Data</button>
+    <button class="button-danger" onclick="clearAllData()">Clear All Test Data</button>
+    <div id="localStorage-output" class="output">Click "Check Current Data" to scan localStorage...</div>
+  </div>
+
+  <div class="test-section">
+    <h2>🎮 Simulate Kid Playing Activity</h2>
+    <p>This creates fake user data as if a kid played the game:</p>
+    <input type="text" id="testUsername" placeholder="Enter kid's name (e.g., Emma)" value="TestKid">
+    <button onclick="simulateKidPlaying()">Simulate Playing Activity</button>
+    <div id="simulate-output" class="output">Simulation results will appear here...</div>
+  </div>
+
+  <div class="test-section">
+    <h2>✅ Admin Panel Data Check</h2>
+    <button class="button-success" onclick="checkAdminPanelData()">Check What Admin Panel Sees</button>
+    <div id="admin-check-output" class="output">Click button to check admin view...</div>
+  </div>
+
+  <div class="test-section">
+    <h2>🔍 Key-by-Key Breakdown</h2>
+    <button onclick="showDetailedBreakdown()">Show Detailed localStorage Breakdown</button>
+    <div id="detailed-output" class="output">Click button for detailed analysis...</div>
+  </div>
+
+  <div class="test-section">
+    <h2>📋 Test Results Summary</h2>
+    <div id="test-summary" class="output">Run tests above to see summary...</div>
+  </div>
+
+  <script>
+    // Hash function (same as in game)
+    function hashUsername(name) {
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = (hash << 5) - hash + name.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash);
+    }
+
+    function normalizeUsername(name) {
+      return name.trim().replace(/\s+/g, " ").toLowerCase();
+    }
+
+    function log(elementId, message, type = 'info') {
+      const output = document.getElementById(elementId);
+      const timestamp = new Date().toLocaleTimeString();
+      let colored = message;
+      
+      if (type === 'success') colored = `✅ ${message}`;
+      else if (type === 'error') colored = `❌ ${message}`;
+      else if (type === 'warning') colored = `⚠️ ${message}`;
+      else colored = `ℹ️ ${message}`;
+      
+      output.innerHTML += `<div class="${type}">${timestamp} - ${colored}</div>\n`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function clearOutput(elementId) {
+      document.getElementById(elementId).innerHTML = '';
+    }
+
+    function checkLocalStorage() {
+      clearOutput('localStorage-output');
+      log('localStorage-output', `Scanning ${localStorage.length} localStorage items...`, 'info');
+      
+      if (localStorage.length === 0) {
+        log('localStorage-output', 'localStorage is completely empty!', 'warning');
+        return;
+      }
+
+      let activityKeys = [];
+      let settingsKeys = [];
+      let otherKeys = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('activityProgress_')) {
+          activityKeys.push(key);
+        } else if (key.startsWith('userSettings_')) {
+          settingsKeys.push(key);
+        } else {
+          otherKeys.push(key);
+        }
+      }
+
+      log('localStorage-output', `Found ${activityKeys.length} activity progress keys`, activityKeys.length > 0 ? 'success' : 'warning');
+      activityKeys.forEach(k => log('localStorage-output', `  • ${k}`, 'info'));
+
+      log('localStorage-output', `Found ${settingsKeys.length} user settings keys`, settingsKeys.length > 0 ? 'success' : 'warning');
+      settingsKeys.forEach(k => log('localStorage-output', `  • ${k}`, 'info'));
+
+      if (otherKeys.length > 0) {
+        log('localStorage-output', `Found ${otherKeys.length} other keys (game/sync/tracking data)`, 'info');
+        otherKeys.forEach(k => log('localStorage-output', `  • ${k}`, 'info'));
+      }
+    }
+
+    function simulateKidPlaying() {
+      clearOutput('simulate-output');
+      const name = document.getElementById('testUsername').value.trim();
+      
+      if (!name) {
+        log('simulate-output', 'Please enter a name!', 'error');
+        return;
+      }
+
+      const normalized = normalizeUsername(name);
+      const userId = hashUsername(normalized);
+      
+      log('simulate-output', `Creating user: "${name}"`, 'info');
+      log('simulate-output', `Normalized: "${normalized}"`, 'info');
+      log('simulate-output', `User ID (hash): ${userId}`, 'info');
+
+      // Simulate saving as the game would
+      localStorage.setItem(
+        `activityProgress_${userId}`,
+        JSON.stringify({
+          completed: true,
+          score: 245,
+          timestamp: new Date().toISOString(),
+          plantStage: 3,
+          achievements: ['first_activity', 'score_100'],
+          sessionCount: 1
+        })
+      );
+
+      localStorage.setItem(
+        `userSettings_${userId}`,
+        JSON.stringify({
+          name: name,
+          createdAt: new Date().toISOString(),
+          theme: 'default',
+          soundEnabled: true
+        })
+      );
+
+      localStorage.setItem(`lastLogin_${userId}`, new Date().toISOString());
+      localStorage.setItem(`userCreated_${userId}`, new Date().toISOString());
+
+      log('simulate-output', `✅ Saved activityProgress_${userId}`, 'success');
+      log('simulate-output', `✅ Saved userSettings_${userId}`, 'success');
+      log('simulate-output', `✅ Saved lastLogin_${userId}`, 'success');
+      log('simulate-output', `\nData saved! Now check "Admin Panel Data Check" below.`, 'success');
+    }
+
+    function checkAdminPanelData() {
+      clearOutput('admin-check-output');
+      const users = [];
+      
+      log('admin-check-output', 'Scanning for activity progress keys...', 'info');
+      
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        
+        if (key && key.startsWith('activityProgress_')) {
+          const userId = key.replace('activityProgress_', '');
+          try {
+            const progressData = JSON.parse(localStorage.getItem(key)) || {};
+            const settingsStr = localStorage.getItem(`userSettings_${userId}`) || '{"name":"Unknown"}';
+            const settings = JSON.parse(settingsStr);
+            
+            users.push({
+              userId,
+              name: settings.name || 'Unknown Player',
+              activities: progressData.sessionCount || 0,
+              score: progressData.score || 0,
+              plantStage: progressData.plantStage || 0,
+              lastLogin: localStorage.getItem(`lastLogin_${userId}`)
+            });
+
+            log('admin-check-output', `Found user: ${settings.name} (ID: ${userId})`, 'success');
+            log('admin-check-output', `  Score: ${progressData.score}, Plant Stage: ${progressData.plantStage}`, 'info');
+          } catch (err) {
+            log('admin-check-output', `Error parsing ${userId}: ${err.message}`, 'error');
+          }
+        }
+      }
+
+      if (users.length === 0) {
+        log('admin-check-output', 'No users found in admin format!', 'error');
+        log('admin-check-output', 'Try "Simulate Kid Playing Activity" first.', 'warning');
+      } else {
+        log('admin-check-output', `\n✅ Admin panel would see ${users.length} user(s):`, 'success');
+        users.forEach((u, idx) => {
+          log('admin-check-output', `\n${idx + 1}. ${u.name}`, 'success');
+          log('admin-check-output', `   ID: ${u.userId}`, 'info');
+          log('admin-check-output', `   Score: ${u.score} pts`, 'info');
+          log('admin-check-output', `   Plant: Stage ${u.plantStage}`, 'info');
+        });
+      }
+    }
+
+    function showDetailedBreakdown() {
+      clearOutput('detailed-output');
+      log('detailed-output', `=== localStorage Detailed Breakdown ===\n`, 'info');
+      log('detailed-output', `Total items: ${localStorage.length}\n`, 'info');
+
+      const categories = {};
+      
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const value = localStorage.getItem(key);
+        let category = 'Other';
+        
+        if (key.startsWith('activityProgress_')) category = 'Admin: Activity';
+        else if (key.startsWith('userSettings_')) category = 'Admin: Settings';
+        else if (key.startsWith('userCreated_')) category = 'Admin: Tracking';
+        else if (key.startsWith('lastLogin_')) category = 'Admin: Tracking';
+        else if (key.startsWith('kg_')) category = 'Game: State';
+        else if (key.includes('sync')) category = 'Sync: Data';
+
+        if (!categories[category]) categories[category] = [];
+        categories[category].push({ key, size: value.length });
+      }
+
+      Object.keys(categories).sort().forEach(cat => {
+        log('detailed-output', `\n${cat}:`, 'info');
+        categories[cat].forEach(item => {
+          log('detailed-output', `  • ${item.key} (${item.size} bytes)`, 'info');
+        });
+      });
+
+      // Summary
+      log('detailed-output', `\n=== Summary ===`, 'info');
+      const totalSize = Object.values(categories).flat().reduce((sum, item) => sum + item.size, 0);
+      log('detailed-output', `Total storage: ~${(totalSize / 1024).toFixed(2)} KB`, 'info');
+      log('detailed-output', `Admin-compatible keys: ${(categories['Admin: Activity'] || []).length}`, 
+        (categories['Admin: Activity'] || []).length > 0 ? 'success' : 'warning');
+    }
+
+    function clearAllData() {
+      if (!confirm('⚠️ Clear all test data from localStorage?')) return;
+      localStorage.clear();
+      log('localStorage-output', 'All data cleared!', 'warning');
+    }
+
+    // Auto-check on load
+    window.addEventListener('load', checkLocalStorage);
+  </script>
+</body>
+</html>
