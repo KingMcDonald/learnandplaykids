@@ -1,0 +1,36 @@
+# Netlify Configuration for Learn & Play Kids
+# This file configures the Netlify deployment
+
+[build]
+# Command to run during build
+command = "echo 'Building static site...'"
+# Directory containing your site
+publish = "."
+# Directory for serverless functions
+functions = "netlify/functions"
+
+[dev]
+# Development server settings
+command = "node server.js"
+port = 3000
+publish = "."
+
+# Redirect all requests that don't match files to index.html (for SPA)
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+# Environment variables
+[context.production]
+environment = { NODE_ENV = "production" }
+
+[context.develop]
+environment = { NODE_ENV = "development" }
+
+[context.deploy-preview]
+environment = { NODE_ENV = "preview" }
+
+# Netlify Functions configuration
+[[netlify.functions]]
+node_bundler = "esbuild"
