@@ -208,21 +208,12 @@ class KindergartenGame {
         <div class="notification-actions">
           <button class="notification-btn play-btn" onclick="game.playBGM(); setTimeout(() => { game.proceedFromNotification(); }, 500);">▶ Play Now</button>
           <button class="notification-btn skip-btn" onclick="game.proceedFromNotification()">➜ Skip</button>
-          <button class="notification-close" onclick="game.closeNotification()">✕</button>
         </div>
       </div>
     `;
     document.body.appendChild(notification);
     
     // Prevent auto-removal - user must click play or skip
-  }
-
-  closeNotification() {
-    const notification = document.querySelector(".bgm-notification");
-    if (notification) {
-      notification.style.animation = "slideOutDown 0.4s ease forwards";
-      setTimeout(() => notification.remove(), 400);
-    }
   }
 
   proceedFromNotification() {
