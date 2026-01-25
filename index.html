@@ -49,10 +49,58 @@
         <button class="main-btn start-btn" onclick="game.startGame()">
           START PLAY
         </button>
+        <button class="main-btn help-btn" onclick="game.showTutorial()">
+          📚 How to Play
+        </button>
       </div>
     </div>
 
-    <!-- ==================== MAIN GARDEN SCREEN ==================== -->
+    <!-- ==================== TUTORIAL MODAL ==================== -->
+    <div id="tutorialModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <button class="modal-close" onclick="document.getElementById('tutorialModal').style.display='none';">✕</button>
+        <h2>📚 How to Play</h2>
+        <div class="tutorial-content">
+          <h3>🎯 Goal</h3>
+          <p>Help your plant grow by completing learning activities! Each activity you complete earns points and helps your plant grow to new stages.</p>
+          
+          <h3>🌱 Plant Growth</h3>
+          <p>Your plant starts as a seed and grows through 20 different stages. Earn points in activities to level up your plant. The more you learn, the bigger your plant becomes!</p>
+          
+          <h3>🎮 How to Play Activities</h3>
+          <ul>
+            <li><strong>Alphabet:</strong> Match letters with their sounds</li>
+            <li><strong>Phonics:</strong> Learn letter combinations and sounds</li>
+            <li><strong>Match:</strong> Find matching pairs of words/images</li>
+            <li><strong>Listen:</strong> Identify sounds and words</li>
+            <li><strong>Memory:</strong> Flip cards to find matching pairs</li>
+            <li><strong>Sight Words:</strong> Learn common words you see in reading</li>
+            <li><strong>Rhyme:</strong> Find words that rhyme together</li>
+            <li><strong>Math:</strong> Solve simple addition and subtraction problems</li>
+          </ul>
+          
+          <h3>✨ Tips for Success</h3>
+          <ul>
+            <li>Each activity has 5 questions</li>
+            <li>Try to get all answers right to earn full points</li>
+            <li>You can replay activities multiple times</li>
+            <li>Your progress is saved automatically</li>
+            <li>Play every day to see your streak grow! 🔥</li>
+          </ul>
+          
+          <h3>📊 Statistics</h3>
+          <p>Click on "Stats" to see:</p>
+          <ul>
+            <li>Your total score</li>
+            <li>Activities completed</li>
+            <li>Badges earned</li>
+            <li>Daily streak (consecutive days played)</li>
+          </ul>
+          
+          <p style="margin-top: 20px; font-size: 14px; color: #666;">💡 Have fun learning!</p>
+        </div>
+      </div>
+    </div>
     <div id="gardenScreen" class="screen">
       <div class="header">
         <span class="stats" id="appTitle" style="cursor: pointer;">Score: <span id="score">0</span></span>
@@ -227,6 +275,14 @@
           >
             <span class="emoji">🎯</span>
             <span class="label">Daily</span>
+          </button>
+          <button
+            class="feature-btn"
+            onclick="game.showTutorial()"
+            title="How to Play"
+          >
+            <span class="emoji">📚</span>
+            <span class="label">Help</span>
           </button>
         </div>
       </div>

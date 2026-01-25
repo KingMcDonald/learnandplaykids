@@ -23,15 +23,20 @@ class AdminPanel {
 
   setupEventListeners() {
     let titleClickCount = 0;
+    let clickTimeout = null;
     const titleElement = document.getElementById("appTitle");
     if (titleElement) {
       titleElement.addEventListener("click", () => {
         titleClickCount++;
+        if (clickTimeout) clearTimeout(clickTimeout);
+        
         if (titleClickCount === 5) {
           this.showLoginModal();
           titleClickCount = 0;
+        } else {
+          console.log(`🔓 Admin clicks: ${titleClickCount}/5`);
+          clickTimeout = setTimeout(() => { titleClickCount = 0; }, 5000);
         }
-        setTimeout(() => { titleClickCount = 0; }, 3000);
       });
     }
     document.getElementById("adminLoginBtn")?.addEventListener("click", () => this.showLoginModal());

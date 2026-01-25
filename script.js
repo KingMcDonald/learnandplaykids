@@ -3337,6 +3337,13 @@ class KindergartenGame {
     document.body.insertAdjacentHTML("beforeend", modalHTML);
   }
 
+  showTutorial() {
+    const tutorialModal = document.getElementById("tutorialModal");
+    if (tutorialModal) {
+      tutorialModal.style.display = "flex";
+    }
+  }
+
   // ==================== DATA PERSISTENCE ====================
 
   saveSavedProgress() {
