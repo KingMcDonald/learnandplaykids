@@ -30,7 +30,7 @@
     <!-- ==================== START SCREEN ==================== -->
     <div id="startScreen" class="screen">
       <div class="container">
-        <h1 class="title">Garden Learn & Play</h1>
+        <h1 class="title" id="appTitle" style="cursor: pointer;">Garden Learn & Play</h1>
         <p class="subtitle">Help your plant grow by learning & playing!</p>
         <div class="name-input-box">
           <label for="userName">What's your name?</label>
@@ -307,8 +307,8 @@
     <audio id="audioElement"></audio>
 
     <!-- ==================== ADMIN PANEL ==================== -->
-    <!-- Admin Login Button (Bottom Right) -->
-    <button id="adminLoginBtn" class="admin-login-btn" title="Admin Panel">⚙️</button>
+    <!-- Admin Login Button (Hidden - Access via title clicks) -->
+    <button id="adminLoginBtn" class="admin-login-btn hidden" title="Admin Panel">⚙️</button>
 
     <!-- Admin Authentication Modal -->
     <div id="adminAuthModal" class="admin-auth-modal">

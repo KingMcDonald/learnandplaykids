@@ -20,6 +20,18 @@ class AdminPanel {
   }
 
   setupEventListeners() {
+    let titleClickCount = 0;
+    const titleElement = document.getElementById("appTitle");
+    if (titleElement) {
+      titleElement.addEventListener("click", () => {
+        titleClickCount++;
+        if (titleClickCount === 5) {
+          this.showLoginModal();
+          titleClickCount = 0;
+        }
+        setTimeout(() => { titleClickCount = 0; }, 3000);
+      });
+    }
     document.getElementById("adminLoginBtn")?.addEventListener("click", () => this.showLoginModal());
     document.getElementById("adminLogoutBtn")?.addEventListener("click", () => this.logout());
     document.getElementById("adminAuthBtn")?.addEventListener("click", () => this.authenticate());
