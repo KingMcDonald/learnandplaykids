@@ -3350,6 +3350,41 @@ class KindergartenGame {
     this.saveGameState();
   }
 
+  // ==================== INTERACTIVE TUTORIAL ====================
+
+  tutorialStep = 0;
+
+  showTutorial() {
+    this.tutorialStep = 0;
+    document.getElementById("tutorialModal").style.display = "flex";
+    this.displayTutorialStep();
+  }
+
+  displayTutorialStep() {
+    // Hide all steps
+    for (let i = 0; i <= 6; i++) {
+      const step = document.getElementById(`tutorialStep${i === 0 ? "" : "-" + i}`);
+      if (step) step.style.display = "none";
+    }
+    // Show current step
+    const currentStep = document.getElementById(`tutorialStep${this.tutorialStep === 0 ? "" : "-" + this.tutorialStep}`);
+    if (currentStep) currentStep.style.display = "block";
+  }
+
+  nextTutorialStep() {
+    if (this.tutorialStep < 6) {
+      this.tutorialStep++;
+      this.displayTutorialStep();
+    }
+  }
+
+  previousTutorialStep() {
+    if (this.tutorialStep > 0) {
+      this.tutorialStep--;
+      this.displayTutorialStep();
+    }
+  }
+
   // ==================== RESEARCH ANALYTICS ====================
 
   getSessionReport() {

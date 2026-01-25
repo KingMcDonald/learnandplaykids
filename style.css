@@ -4404,10 +4404,119 @@ select {
   backdrop-filter: blur(10px);
 }
 
+/* ==================== INTERACTIVE TUTORIAL STYLES ==================== */
+
+.tutorial-interactive {
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+}
+
+.tutorial-step {
+  display: flex;
+  flex-direction: column;
+  padding: 30px;
+  flex: 1;
+  animation: slideIn 0.3s ease-in-out;
+  overflow-y: auto;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tutorial-header {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.tutorial-body {
+  flex: 1;
+  margin-bottom: 20px;
+  color: #fff;
+  font-size: 16px;
+}
+
+.activity-card {
+  padding: 15px;
+  border-radius: 10px;
+  margin: 10px 0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.activity-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.tutorial-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+  flex-wrap: wrap;
+}
+
+.tutorial-btn {
+  padding: 12px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tutorial-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.6);
+}
+
+.tutorial-btn:active {
+  transform: translateY(0);
+}
+
 @media (max-width: 600px) {
   .modal-content {
     padding: 25px 15px;
     max-width: 95%;
+  }
+
+  .tutorial-step {
+    padding: 20px;
+  }
+
+  .tutorial-header {
+    font-size: 22px;
+    margin-bottom: 15px;
+  }
+
+  .tutorial-body {
+    font-size: 15px;
+  }
+
+  .tutorial-btn {
+    padding: 10px 20px;
+    font-size: 14px;
   }
 
   .modal-content h2 {

@@ -57,47 +57,144 @@
 
     <!-- ==================== TUTORIAL MODAL ==================== -->
     <div id="tutorialModal" class="modal" style="display: none;">
-      <div class="modal-content">
+      <div class="modal-content tutorial-interactive">
         <button class="modal-close" onclick="document.getElementById('tutorialModal').style.display='none';">✕</button>
-        <h2>📚 How to Play</h2>
-        <div class="tutorial-content">
-          <h3>🎯 Goal</h3>
-          <p>Help your plant grow by completing learning activities! Each activity you complete earns points and helps your plant grow to new stages.</p>
-          
-          <h3>🌱 Plant Growth</h3>
-          <p>Your plant starts as a seed and grows through 20 different stages. Earn points in activities to level up your plant. The more you learn, the bigger your plant becomes!</p>
-          
-          <h3>🎮 How to Play Activities</h3>
-          <ul>
-            <li><strong>Alphabet:</strong> Match letters with their sounds</li>
-            <li><strong>Phonics:</strong> Learn letter combinations and sounds</li>
-            <li><strong>Match:</strong> Find matching pairs of words/images</li>
-            <li><strong>Listen:</strong> Identify sounds and words</li>
-            <li><strong>Memory:</strong> Flip cards to find matching pairs</li>
-            <li><strong>Sight Words:</strong> Learn common words you see in reading</li>
-            <li><strong>Rhyme:</strong> Find words that rhyme together</li>
-            <li><strong>Math:</strong> Solve simple addition and subtraction problems</li>
-          </ul>
-          
-          <h3>✨ Tips for Success</h3>
-          <ul>
-            <li>Each activity has 5 questions</li>
-            <li>Try to get all answers right to earn full points</li>
-            <li>You can replay activities multiple times</li>
-            <li>Your progress is saved automatically</li>
-            <li>Play every day to see your streak grow! 🔥</li>
-          </ul>
-          
-          <h3>📊 Statistics</h3>
-          <p>Click on "Stats" to see:</p>
-          <ul>
-            <li>Your total score</li>
-            <li>Activities completed</li>
-            <li>Badges earned</li>
-            <li>Daily streak (consecutive days played)</li>
-          </ul>
-          
-          <p style="margin-top: 20px; font-size: 14px; color: #666;">💡 Have fun learning!</p>
+        <div id="tutorialStep" class="tutorial-step" data-step="0">
+          <div class="tutorial-header">🎮 Welcome to Learn & Play Kids!</div>
+          <div class="tutorial-body">
+            <p style="font-size: 24px; font-weight: bold; color: #6366f1;">Let's Learn Together!</p>
+            <p style="font-size: 18px; margin: 20px 0;">Click NEXT to start your adventure 👇</p>
+          </div>
+          <div class="tutorial-buttons">
+            <button class="tutorial-btn" onclick="game.nextTutorialStep();">NEXT ➜</button>
+          </div>
+        </div>
+
+        <div id="tutorialStep-1" class="tutorial-step" style="display:none;" data-step="1">
+          <div class="tutorial-header">🌱 Meet Your Plant!</div>
+          <div class="tutorial-body">
+            <p style="font-size: 60px; text-align: center; margin: 20px 0;">🌱</p>
+            <p style="font-size: 18px; text-align: center;"><strong>This is YOUR plant!</strong></p>
+            <p style="font-size: 16px; margin: 15px 0;">When you complete activities and earn points, your plant grows! 🌿→🌳</p>
+            <p style="font-size: 16px; color: #f59e0b;">💡 The more you learn = The bigger your plant gets!</p>
+          </div>
+          <div class="tutorial-buttons">
+            <button class="tutorial-btn" onclick="game.previousTutorialStep();">⬅ BACK</button>
+            <button class="tutorial-btn" onclick="game.nextTutorialStep();">NEXT ➜</button>
+          </div>
+        </div>
+
+        <div id="tutorialStep-2" class="tutorial-step" style="display:none;" data-step="2">
+          <div class="tutorial-header">🎯 How to Earn Points</div>
+          <div class="tutorial-body">
+            <div class="activity-card" style="background: #fecaca; margin: 10px 0; padding: 15px; border-radius: 10px;">
+              <p style="font-size: 18px; margin: 5px;"><strong>📝 Pick an Activity</strong></p>
+              <p style="font-size: 14px;">Choose from: Alphabet, Math, Rhyme & more!</p>
+            </div>
+            <div class="activity-card" style="background: #bfdbfe; margin: 10px 0; padding: 15px; border-radius: 10px;">
+              <p style="font-size: 18px; margin: 5px;"><strong>🎮 Answer Questions</strong></p>
+              <p style="font-size: 14px;">Each activity has 5 fun questions!</p>
+            </div>
+            <div class="activity-card" style="background: #d1fae5; margin: 10px 0; padding: 15px; border-radius: 10px;">
+              <p style="font-size: 18px; margin: 5px;"><strong>⭐ Earn Points</strong></p>
+              <p style="font-size: 14px;">Get points for each correct answer!</p>
+            </div>
+          </div>
+          <div class="tutorial-buttons">
+            <button class="tutorial-btn" onclick="game.previousTutorialStep();">⬅ BACK</button>
+            <button class="tutorial-btn" onclick="game.nextTutorialStep();">NEXT ➜</button>
+          </div>
+        </div>
+
+        <div id="tutorialStep-3" class="tutorial-step" style="display:none;" data-step="3">
+          <div class="tutorial-header">🎮 Available Activities</div>
+          <div class="tutorial-body" style="max-height: 350px; overflow-y: auto;">
+            <div class="activity-card" style="background: #fed7aa; margin: 8px 0; padding: 12px; border-radius: 8px; font-size: 15px;">
+              <strong>🔤 Alphabet:</strong> Match letters & sounds!
+            </div>
+            <div class="activity-card" style="background: #fca5a5; margin: 8px 0; padding: 12px; border-radius: 8px; font-size: 15px;">
+              <strong>🎵 Phonics:</strong> Learn letter combos!
+            </div>
+            <div class="activity-card" style="background: #a5f3fc; margin: 8px 0; padding: 12px; border-radius: 8px; font-size: 15px;">
+              <strong>🎯 Match:</strong> Find matching pairs!
+            </div>
+            <div class="activity-card" style="background: #bae6fd; margin: 8px 0; padding: 12px; border-radius: 8px; font-size: 15px;">
+              <strong>👂 Listen:</strong> Identify sounds!
+            </div>
+            <div class="activity-card" style="background: #c4b5fd; margin: 8px 0; padding: 12px; border-radius: 8px; font-size: 15px;">
+              <strong>🧩 Memory:</strong> Flip & match cards!
+            </div>
+            <div class="activity-card" style="background: #ddd6fe; margin: 8px 0; padding: 12px; border-radius: 8px; font-size: 15px;">
+              <strong>👀 Sight Words:</strong> Learn common words!
+            </div>
+            <div class="activity-card" style="background: #d1fae5; margin: 8px 0; padding: 12px; border-radius: 8px; font-size: 15px;">
+              <strong>🎼 Rhyme:</strong> Find words that rhyme!
+            </div>
+            <div class="activity-card" style="background: #dcfce7; margin: 8px 0; padding: 12px; border-radius: 8px; font-size: 15px;">
+              <strong>🔢 Math:</strong> Addition & subtraction!
+            </div>
+          </div>
+          <div class="tutorial-buttons">
+            <button class="tutorial-btn" onclick="game.previousTutorialStep();">⬅ BACK</button>
+            <button class="tutorial-btn" onclick="game.nextTutorialStep();">NEXT ➜</button>
+          </div>
+        </div>
+
+        <div id="tutorialStep-4" class="tutorial-step" style="display:none;" data-step="4">
+          <div class="tutorial-header">📊 Track Your Progress</div>
+          <div class="tutorial-body">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin: 10px 0;">
+              <p style="font-size: 16px; margin: 5px;"><strong>Your Score:</strong> Points from all activities</p>
+            </div>
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 10px; margin: 10px 0;">
+              <p style="font-size: 16px; margin: 5px;"><strong>Plant Stage:</strong> Shows how much your plant grew</p>
+            </div>
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 10px; margin: 10px 0;">
+              <p style="font-size: 16px; margin: 5px;"><strong>Daily Streak:</strong> Play every day to build a streak! 🔥</p>
+            </div>
+            <p style="font-size: 18px; margin-top: 20px; color: #f59e0b;">✨ <strong>Play Every Day = Bigger Streak!</strong></p>
+          </div>
+          <div class="tutorial-buttons">
+            <button class="tutorial-btn" onclick="game.previousTutorialStep();">⬅ BACK</button>
+            <button class="tutorial-btn" onclick="game.nextTutorialStep();">NEXT ➜</button>
+          </div>
+        </div>
+
+        <div id="tutorialStep-5" class="tutorial-step" style="display:none;" data-step="5">
+          <div class="tutorial-header">⭐ Tips to Level Up!</div>
+          <div class="tutorial-body">
+            <div style="background: #fef3c7; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #f59e0b;">
+              <p style="font-size: 16px; margin: 5px;"><strong>💡 Tip #1:</strong> Each activity = 5 questions</p>
+            </div>
+            <div style="background: #dbeafe; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #3b82f6;">
+              <p style="font-size: 16px; margin: 5px;"><strong>💡 Tip #2:</strong> Get all answers right = max points! 🎯</p>
+            </div>
+            <div style="background: #dcfce7; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #10b981;">
+              <p style="font-size: 16px; margin: 5px;"><strong>💡 Tip #3:</strong> Play activities many times!</p>
+            </div>
+            <div style="background: #fecaca; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #ef4444;">
+              <p style="font-size: 16px; margin: 5px;"><strong>💡 Tip #4:</strong> No pressure - have FUN! 🎉</p>
+            </div>
+          </div>
+          <div class="tutorial-buttons">
+            <button class="tutorial-btn" onclick="game.previousTutorialStep();">⬅ BACK</button>
+            <button class="tutorial-btn" onclick="game.nextTutorialStep();">NEXT ➜</button>
+          </div>
+        </div>
+
+        <div id="tutorialStep-6" class="tutorial-step" style="display:none;" data-step="6">
+          <div class="tutorial-header">🚀 Ready to Start?</div>
+          <div class="tutorial-body" style="text-align: center;">
+            <p style="font-size: 28px; margin: 20px 0;">🌟</p>
+            <p style="font-size: 20px; font-weight: bold; margin: 15px 0;">You're all set!</p>
+            <p style="font-size: 16px; margin: 15px 0;">Pick an activity and start earning points!</p>
+            <p style="font-size: 16px; color: #f59e0b;">Remember: Have fun and keep learning! 🎮✨</p>
+          </div>
+          <div class="tutorial-buttons">
+            <button class="tutorial-btn" onclick="game.previousTutorialStep();">⬅ BACK</button>
+            <button class="tutorial-btn" onclick="document.getElementById('tutorialModal').style.display='none'; game.tutorialStep = 0;">START PLAYING 🎉</button>
+          </div>
+        </div>
         </div>
       </div>
     </div>

@@ -12,6 +12,8 @@ class AdminPanel {
     this.autoRefreshInterval = null;
     this.sessionTimeout = 15 * 60 * 1000; // 15 minutes
     this.inactivityTimer = null;
+    this.titleClickCount = 0;
+    this.clickTimeout = null;
     this.init();
   }
 
@@ -22,21 +24,12 @@ class AdminPanel {
   }
 
   setupEventListeners() {
-    let titleClickCount = 0;
-    let clickTimeout = null;
     const titleElement = document.getElementById("appTitle");
     if (titleElement) {
-      titleElement.addEventListener("click", () => {
-        titleClickCount++;
-        if (clickTimeout) clearTimeout(clickTimeout);
-        
-        if (titleClickCount === 5) {
-          this.showLoginModal();
-          titleClickCount = 0;
-        } else {
-          console.log(`🔓 Admin clicks: ${titleClickCount}/5`);
-          clickTimeout = setTimeout(() => { titleClickCount = 0; }, 5000);
-        }
+      titleElement.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleAdminClick();
       });
     }
     document.getElementById("adminLoginBtn")?.addEventListener("click", () => this.showLoginModal());
@@ -51,6 +44,24 @@ class AdminPanel {
     if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) this.closeLoginModal(); });
     const passwordInput = document.getElementById("adminPasswordInput");
     if (passwordInput) passwordInput.addEventListener("keypress", (e) => { if (e.key === "Enter") this.authenticate(); });
+  }
+
+  handleAdminClick() {
+    this.titleClickCount++;
+    console.log(`🔓 Admin clicks: ${this.titleClickCount}/5`);
+    
+    if (this.clickTimeout) clearTimeout(this.clickTimeout);
+    
+    if (this.titleClickCount >= 5) {
+      console.log("✅ Admin access granted!");
+      this.showLoginModal();
+      this.titleClickCount = 0;
+    } else {
+      this.clickTimeout = setTimeout(() => {
+        console.log("⏰ Click counter reset");
+        this.titleClickCount = 0;
+      }, 5000);
+    }
   }
 
   showLoginModal() {
