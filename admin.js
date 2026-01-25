@@ -108,19 +108,28 @@ class AdminPanel {
       this.isAuthenticated = true;
       this.closeLoginModal();
       
-      const adminSection = document.getElementById("adminSection");
+      // Show admin panel and hide login button
+      const adminPanel = document.getElementById("adminPanel");
       const adminLoginBtn = document.getElementById("adminLoginBtn");
       const adminLogoutBtn = document.getElementById("adminLogoutBtn");
       
-      if (adminSection) adminSection.classList.remove("hidden");
-      if (adminLoginBtn) adminLoginBtn.classList.add("hidden");
-      if (adminLoginBtn) adminLoginBtn.style.display = "none";
-      if (adminLogoutBtn) adminLogoutBtn.classList.remove("hidden");
+      if (adminPanel) {
+        adminPanel.classList.remove("hidden");
+        adminPanel.style.display = "block";
+      }
+      if (adminLoginBtn) {
+        adminLoginBtn.classList.add("hidden");
+        adminLoginBtn.style.display = "none";
+      }
+      if (adminLogoutBtn) {
+        adminLogoutBtn.classList.remove("hidden");
+        adminLogoutBtn.style.display = "block";
+      }
       
       this.startAutoRefresh();
       this.startSessionTimeout();
-      this.loadUsers();
-      this.notify("✅ Admin access granted! Auto-logout in 15 minutes.", "success");
+      this.loadUsers(); // Load once on login
+      this.notify("✅ Admin panel loaded!", "success");
     } else {
       this.notify("❌ Wrong password", "error");
       const pwd = document.getElementById("adminPassword");
@@ -132,19 +141,26 @@ class AdminPanel {
     if (confirm("Are you sure you want to logout?")) {
       this.isAuthenticated = false;
       
-      const adminSection = document.getElementById("adminSection");
+      const adminPanel = document.getElementById("adminPanel");
       const adminLoginBtn = document.getElementById("adminLoginBtn");
       const adminLogoutBtn = document.getElementById("adminLogoutBtn");
       
-      if (adminSection) adminSection.classList.add("hidden");
+      if (adminPanel) {
+        adminPanel.classList.add("hidden");
+        adminPanel.style.display = "none";
+      }
       if (adminLoginBtn) {
         adminLoginBtn.classList.remove("hidden");
-        adminLoginBtn.style.display = "none";
+        adminLoginBtn.style.display = "none"; // Keep hidden until 5 clicks again
       }
-      if (adminLogoutBtn) adminLogoutBtn.classList.add("hidden");
+      if (adminLogoutBtn) {
+        adminLogoutBtn.classList.add("hidden");
+        adminLogoutBtn.style.display = "none";
+      }
       
       this.stopAutoRefresh();
       this.stopSessionTimeout();
+      this.titleClickCount = 0; // Reset click counter
       this.notify("Logged out", "info");
     }
   }
@@ -170,10 +186,12 @@ class AdminPanel {
   }
 
   async loadUsers() {
+    if (!this.isAuthenticated) return; // Don't load if not authenticated
+    
     this.showLoader(true);
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10 seconds
       
       const response = await fetch(`${this.apiEndpoint}?action=getAllUsers`, { signal: controller.signal });
       clearTimeout(timeoutId);
@@ -189,7 +207,11 @@ class AdminPanel {
         this.notify("⚠️ Using local data", "warning");
       }
     } catch (error) {
-      console.error("Load error:", error);
+      if (error.name === 'AbortError') {
+        console.warn("⏱️ Request timeout - using local data");
+      } else {
+        console.error("Load error:", error);
+      }
       this.loadFromLocalStorage();
       this.renderTable();
       this.notify("❌ Using cached data", "error");
@@ -366,9 +388,10 @@ class AdminPanel {
   startAutoRefresh() {
     if (this.autoRefreshInterval) return;
     this.autoRefreshInterval = setInterval(() => {
-      const tbody = document.getElementById("adminUsersTableBody");
-      if (tbody && this.isAuthenticated) this.loadUsers();
-    }, 10000);
+      if (this.isAuthenticated && document.getElementById("adminPanel")?.style.display === "block") {
+        this.loadUsers();
+      }
+    }, 30000); // Refresh every 30 seconds instead of 10
   }
 
   stopAutoRefresh() {
