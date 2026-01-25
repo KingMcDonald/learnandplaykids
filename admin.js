@@ -19,8 +19,13 @@ class AdminPanel {
 
   init() {
     this.setupEventListeners();
-    this.loadUsers();
-    if (this.isAuthenticated) this.startAutoRefresh();
+    // Only load users if authenticated, otherwise wait for login
+    if (this.isAuthenticated) {
+      this.loadUsers();
+      this.startAutoRefresh();
+    } else {
+      console.log("✅ Admin panel ready - click score 5x to login");
+    }
   }
 
   setupEventListeners() {
@@ -42,7 +47,7 @@ class AdminPanel {
     document.getElementById("adminClearBtn")?.addEventListener("click", () => this.confirmClearAllData());
     const modal = document.getElementById("adminAuthModal");
     if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) this.closeLoginModal(); });
-    const passwordInput = document.getElementById("adminPasswordInput");
+    const passwordInput = document.getElementById("adminPassword");
     if (passwordInput) passwordInput.addEventListener("keypress", (e) => { if (e.key === "Enter") this.authenticate(); });
   }
 
@@ -54,7 +59,13 @@ class AdminPanel {
     
     if (this.titleClickCount >= 5) {
       console.log("✅ Admin access granted!");
-      this.showLoginModal();
+      // Show the admin button instead of modal directly
+      const adminBtn = document.getElementById("adminLoginBtn");
+      if (adminBtn) {
+        adminBtn.classList.remove("hidden");
+        adminBtn.style.display = "block";
+        console.log("🔧 Admin button is now visible!");
+      }
       this.titleClickCount = 0;
     } else {
       this.clickTimeout = setTimeout(() => {
@@ -67,23 +78,28 @@ class AdminPanel {
   showLoginModal() {
     const modal = document.getElementById("adminAuthModal");
     if (modal) {
-      modal.classList.remove("hidden");
-      modal.classList.add("visible");
-      document.getElementById("adminPasswordInput").focus();
+      modal.style.display = "flex";
+      const passwordInput = document.getElementById("adminPassword");
+      if (passwordInput) {
+        passwordInput.focus();
+        passwordInput.value = "";
+      }
     }
   }
 
   closeLoginModal() {
     const modal = document.getElementById("adminAuthModal");
     if (modal) {
-      modal.classList.add("hidden");
-      modal.classList.remove("visible");
-      document.getElementById("adminPasswordInput").value = "";
+      modal.style.display = "none";
+    }
+    const passwordInput = document.getElementById("adminPassword");
+    if (passwordInput) {
+      passwordInput.value = "";
     }
   }
 
   authenticate() {
-    const password = document.getElementById("adminPasswordInput").value;
+    const password = document.getElementById("adminPassword")?.value || "";
     if (!password || password.trim() === "") {
       this.notify("Please enter a password", "error");
       return;
@@ -91,25 +107,42 @@ class AdminPanel {
     if (password === this.adminPassword) {
       this.isAuthenticated = true;
       this.closeLoginModal();
-      document.getElementById("adminSection").classList.remove("hidden");
-      document.getElementById("adminLoginBtn").classList.add("hidden");
-      document.getElementById("adminLogoutBtn").classList.remove("hidden");
+      
+      const adminSection = document.getElementById("adminSection");
+      const adminLoginBtn = document.getElementById("adminLoginBtn");
+      const adminLogoutBtn = document.getElementById("adminLogoutBtn");
+      
+      if (adminSection) adminSection.classList.remove("hidden");
+      if (adminLoginBtn) adminLoginBtn.classList.add("hidden");
+      if (adminLoginBtn) adminLoginBtn.style.display = "none";
+      if (adminLogoutBtn) adminLogoutBtn.classList.remove("hidden");
+      
       this.startAutoRefresh();
       this.startSessionTimeout();
       this.loadUsers();
-      this.notify("Admin access granted! Auto-logout in 15 minutes.", "success");
+      this.notify("✅ Admin access granted! Auto-logout in 15 minutes.", "success");
     } else {
       this.notify("❌ Wrong password", "error");
-      document.getElementById("adminPasswordInput").value = "";
+      const pwd = document.getElementById("adminPassword");
+      if (pwd) pwd.value = "";
     }
   }
 
   logout() {
     if (confirm("Are you sure you want to logout?")) {
       this.isAuthenticated = false;
-      document.getElementById("adminSection").classList.add("hidden");
-      document.getElementById("adminLoginBtn").classList.remove("hidden");
-      document.getElementById("adminLogoutBtn").classList.add("hidden");
+      
+      const adminSection = document.getElementById("adminSection");
+      const adminLoginBtn = document.getElementById("adminLoginBtn");
+      const adminLogoutBtn = document.getElementById("adminLogoutBtn");
+      
+      if (adminSection) adminSection.classList.add("hidden");
+      if (adminLoginBtn) {
+        adminLoginBtn.classList.remove("hidden");
+        adminLoginBtn.style.display = "none";
+      }
+      if (adminLogoutBtn) adminLogoutBtn.classList.add("hidden");
+      
       this.stopAutoRefresh();
       this.stopSessionTimeout();
       this.notify("Logged out", "info");
@@ -198,37 +231,57 @@ class AdminPanel {
 
   renderTable() {
     const tbody = document.getElementById("adminUsersTableBody");
-    if (!tbody) return;
+    if (!tbody) {
+      console.warn("⚠️ Admin users table body not found");
+      return;
+    }
+    
     if (this.users.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No users found</td></tr>';
       return;
     }
-    tbody.innerHTML = this.users.map(user => `
+    
+    tbody.innerHTML = this.users.map((user, idx) => `
       <tr class="border-b hover:bg-gray-50">
-        <td class="px-4 py-2">${user.name}</td>
-        <td class="px-4 py-2">${user.score || 0}</td>
+        <td class="px-4 py-2">${idx + 1}</td>
+        <td class="px-4 py-2">${user.name || "Unknown"}</td>
         <td class="px-4 py-2">${user.activities || 0}</td>
+        <td class="px-4 py-2">${user.score || 0}</td>
         <td class="px-4 py-2" title="${user.lastLogin || 'Never'}">${this.timeAgo(user.lastLogin || user.timestamp)}</td>
-        <td class="px-4 py-2 admin-sync-status">${user.syncStatus === "local" ? "📱 Local" : "✅ Synced"}</td>
-        <td class="px-4 py-2"><button onclick="adminPanel.deleteUser('${user.userId}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Delete</button></td>
-        <td class="px-4 py-2"><button onclick="adminPanel.viewUser('${user.userId}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">View</button></td>
+        <td class="px-4 py-2">${user.syncStatus === "local" ? "📱 Local" : "✅ Synced"}</td>
+        <td class="px-4 py-2"><button onclick="window.adminPanel?.deleteUser('${user.userId}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Delete</button> <button onclick="window.adminPanel?.viewUser('${user.userId}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">View</button></td>
       </tr>
     `).join("");
   }
 
   filterUsers(term) {
-    if (!term.trim()) { this.renderTable(); return; }
-    const filtered = this.users.filter(u => u.name.toLowerCase().includes(term.toLowerCase()) || u.userId.toLowerCase().includes(term.toLowerCase()));
+    if (!term.trim()) { 
+      this.renderTable(); 
+      return; 
+    }
+    
+    const filtered = this.users.filter(u => 
+      (u.name && u.name.toLowerCase().includes(term.toLowerCase())) || 
+      (u.userId && u.userId.toLowerCase().includes(term.toLowerCase()))
+    );
+    
     const tbody = document.getElementById("adminUsersTableBody");
-    if (tbody) tbody.innerHTML = filtered.length === 0 ? '<tr><td colspan="7" class="text-center py-4">No match</td></tr>' : filtered.map(user => `
+    if (!tbody) return;
+    
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No match</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = filtered.map((user, idx) => `
       <tr class="border-b hover:bg-gray-50">
-        <td class="px-4 py-2">${user.name}</td>
-        <td class="px-4 py-2">${user.score || 0}</td>
+        <td class="px-4 py-2">${idx + 1}</td>
+        <td class="px-4 py-2">${user.name || "Unknown"}</td>
         <td class="px-4 py-2">${user.activities || 0}</td>
+        <td class="px-4 py-2">${user.score || 0}</td>
         <td class="px-4 py-2">${this.timeAgo(user.timestamp)}</td>
-        <td class="px-4 py-2 admin-sync-status">${user.syncStatus === "local" ? "📱 Local" : "✅ Synced"}</td>
-        <td class="px-4 py-2"><button onclick="adminPanel.deleteUser('${user.userId}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Delete</button></td>
-        <td class="px-4 py-2"><button onclick="adminPanel.viewUser('${user.userId}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">View</button></td>
+        <td class="px-4 py-2">${user.syncStatus === "local" ? "📱 Local" : "✅ Synced"}</td>
+        <td class="px-4 py-2"><button onclick="window.adminPanel?.deleteUser('${user.userId}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Delete</button> <button onclick="window.adminPanel?.viewUser('${user.userId}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">View</button></td>
       </tr>
     `).join("");
   }

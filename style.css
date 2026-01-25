@@ -3547,6 +3547,10 @@ select {
   justify-content: center;
 }
 
+.admin-auth-modal[style*="display: flex"] {
+  display: flex !important;
+}
+
 .admin-auth-container {
   background: white;
   padding: 40px;
@@ -4493,6 +4497,39 @@ select {
 
 .tutorial-btn:active {
   transform: translateY(0);
+}
+
+/* ==================== TUTORIAL SCROLLBAR STYLING ==================== */
+
+.tutorial-scrollable {
+  scroll-behavior: smooth;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.tutorial-scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tutorial-scrollable::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.tutorial-scrollable::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.tutorial-scrollable::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #5568d3 0%, #6a3f8f 100%);
+  box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+/* Firefox */
+.tutorial-scrollable {
+  scrollbar-color: #667eea rgba(255, 255, 255, 0.1);
+  scrollbar-width: thin;
 }
 
 @media (max-width: 600px) {
