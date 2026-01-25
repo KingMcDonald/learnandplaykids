@@ -1,4 +1,10 @@
 /* ==================== GLOBAL STYLES ==================== */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --secondary-color: #764ba2;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -22,11 +28,23 @@ body {
 }
 
 body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   color: #333;
   line-height: 1.6;
   font-size: 16px;
   position: relative;
+}
+
+/* ==================== REUSABLE UTILITY CLASSES ==================== */
+
+/* Hide scrollbars globally for specific containers */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 /* ==================== SCREEN LAYOUT ==================== */
@@ -39,43 +57,20 @@ body {
   height: 100%;
   padding: 20px;
   overflow-y: auto;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   z-index: 1;
 }
 
-.garden-content {
-  /* For Firefox */
-  scrollbar-width: none;
-  /* For IE and Edge */
-  -ms-overflow-style: none;
-}
-
-.garden-content::-webkit-scrollbar {
-  /* For Chrome, Safari, Opera */
-  display: none;
-}
-
-.options-grid {
-  /* For Firefox */
-  scrollbar-width: none;
-  /* For IE and Edge */
-  -ms-overflow-style: none;
-}
-
-.options-grid::-webkit-scrollbar {
-  /* For Chrome, Safari, Opera */
-  display: none;
-}
-
+.garden-content,
+.options-grid,
 .activity-content {
-  /* For Firefox */
   scrollbar-width: none;
-  /* For IE and Edge */
   -ms-overflow-style: none;
 }
 
+.garden-content::-webkit-scrollbar,
+.options-grid::-webkit-scrollbar,
 .activity-content::-webkit-scrollbar {
-  /* For Chrome, Safari, Opera */
   display: none;
 }
 

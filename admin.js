@@ -235,19 +235,42 @@ class AdminPanel {
 
   loadFromLocalStorage() {
     this.users = [];
+    console.log("📁 Scanning localStorage for user data...");
+    
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
+      
       if (key.startsWith("activityProgress_")) {
         const userId = key.replace("activityProgress_", "");
-        const progressData = JSON.parse(localStorage.getItem(key));
-        const settings = JSON.parse(localStorage.getItem(`userSettings_${userId}`) || '{"name":"Unknown"}');
-        const activities = Object.values(progressData || {}).filter(a => a.completed).length;
-        const score = Object.values(progressData || {}).reduce((s, a) => s + (a.score || 0), 0);
-        const lastLogin = localStorage.getItem(`lastLogin_${userId}`) || null;
-        this.users.push({
-          userId, name: settings.name || userId, activities, score, syncStatus: "local", timestamp: new Date().toISOString(), lastLogin
-        });
+        try {
+          const progressData = JSON.parse(localStorage.getItem(key)) || {};
+          const settingsStr = localStorage.getItem(`userSettings_${userId}`) || '{"name":"Unknown"}';
+          const settings = JSON.parse(settingsStr);
+          
+          const activities = Object.values(progressData).filter(a => a && a.completed).length;
+          const score = Object.values(progressData).reduce((s, a) => s + (a?.score || 0), 0);
+          const lastLogin = localStorage.getItem(`lastLogin_${userId}`);
+          
+          this.users.push({
+            userId,
+            name: settings.name || "Unknown Player",
+            activities,
+            score,
+            syncStatus: "local",
+            timestamp: new Date().toISOString(),
+            lastLogin
+          });
+          
+          console.log(`✅ Found user: ${settings.name} (${userId}) - Score: ${score}, Activities: ${activities}`);
+        } catch (err) {
+          console.error(`❌ Error parsing user data for ${userId}:`, err);
+        }
       }
+    }
+    
+    console.log(`📊 Total users found: ${this.users.length}`);
+    if (this.users.length === 0) {
+      console.warn("⚠️ No users found in localStorage. Users need to play at least one activity first.");
     }
   }
 
@@ -259,19 +282,26 @@ class AdminPanel {
     }
     
     if (this.users.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No users found</td></tr>';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+            <p style="font-size: 16px; margin: 10px 0;">📭 No users yet</p>
+            <p style="font-size: 14px; color: #999;">Kids need to play at least one activity to appear here</p>
+          </td>
+        </tr>
+      `;
       return;
     }
     
     tbody.innerHTML = this.users.map((user, idx) => `
-      <tr class="border-b hover:bg-gray-50">
-        <td class="px-4 py-2">${idx + 1}</td>
-        <td class="px-4 py-2">${user.name || "Unknown"}</td>
-        <td class="px-4 py-2">${user.activities || 0}</td>
-        <td class="px-4 py-2">${user.score || 0}</td>
-        <td class="px-4 py-2" title="${user.lastLogin || 'Never'}">${this.timeAgo(user.lastLogin || user.timestamp)}</td>
-        <td class="px-4 py-2">${user.syncStatus === "local" ? "📱 Local" : "✅ Synced"}</td>
-        <td class="px-4 py-2"><button onclick="window.adminPanel?.deleteUser('${user.userId}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Delete</button> <button onclick="window.adminPanel?.viewUser('${user.userId}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">View</button></td>
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="padding: 12px;">${idx + 1}</td>
+        <td style="padding: 12px;">${user.name || "Unknown"}</td>
+        <td style="padding: 12px;">${user.activities || 0}</td>
+        <td style="padding: 12px;"><strong>${user.score || 0}</strong> pts</td>
+        <td style="padding: 12px;" title="${user.lastLogin || 'Never'}">${this.timeAgo(user.lastLogin || user.timestamp)}</td>
+        <td style="padding: 12px;">📱 Local</td>
+        <td style="padding: 12px;"><button onclick="window.adminPanel?.deleteUser('${user.userId}')" style="background: #ef4444; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px;">Delete</button><button onclick="window.adminPanel?.viewUser('${user.userId}')" style="background: #3b82f6; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">View</button></td>
       </tr>
     `).join("");
   }
