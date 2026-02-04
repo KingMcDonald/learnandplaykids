@@ -187,9 +187,15 @@ class KindergartenGame {
 
   startLoadingScreen() {
     // Show loading screen for 2 seconds then show notification
-    // Don't auto-proceed - wait for BGM notification play button
+    // With 5 second timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.warn("⚠️ Loading timeout - proceeding anyway");
+      this.showBGMNotification();
+    }, 5000);
+    
     setTimeout(() => {
       this.showBGMNotification();
+      clearTimeout(timeoutId);
       // Notification will handle showing start screen after play is clicked
     }, 2000);
   }
@@ -1731,23 +1737,20 @@ class KindergartenGame {
   saveGameState() {
     if (!this.userName) return;
     
-    // Save in game format (existing)
-    const gameKey = `kg_${this.hashUsername(this.userName)}`;
-    localStorage.setItem(
-      gameKey,
-      JSON.stringify({
-        userName: this.userName,
-        score: this.score,
-        plantStage: this.plantStage,
-        sessionData: this.sessionData,
-        streak: this.streak,
-        achievements: this.achievements,
-        stats: this.stats,
-      }),
-    );
+    const userId = this.hashUsername(this.userName);
     
-    // IMPORTANT: Also save in admin-compatible format so admin panel can find users
-    const userId = this.hashUsername(this.userName); // Use same hash as userId
+    // Save in game format (existing)
+    const gameKey = `kg_${userId}`;
+    const gameData = {
+      userName: this.userName,
+      score: this.score,
+      plantStage: this.plantStage,
+      sessionData: this.sessionData,
+      streak: this.streak,
+      achievements: this.achievements,
+      stats: this.stats,
+    };
+    localStorage.setItem(gameKey, JSON.stringify(gameData));
     
     // Save activity progress for admin panel
     localStorage.setItem(
@@ -1782,7 +1785,25 @@ class KindergartenGame {
     }
     
     console.log(`💾 Game saved for ${this.userName} (ID: ${userId})`);
+    
+    // ========== CLOUD SYNC ==========
+    // Sync to cloud in background (don't block game)
+    this.syncToCloud(userId, this.userName, gameData);
   }
+
+  syncToCloud(userId, userName, gameData) {
+    // Background sync to Supabase - non-blocking
+    // Safety check: if CloudSyncManager not ready, skip silently
+    if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager) {
+      CloudSyncManager.syncToCloud(userId, userName, gameData).catch(e => {
+        console.debug("Background sync scheduled:", e);
+      });
+      console.debug("☁️ Queued for Supabase sync...");
+    } else {
+      console.debug("⚠️ CloudSyncManager not available - local save only");
+    }
+  }
+
 
   loadSavedProgress() {
     if (!this.userName) return false;
@@ -1912,6 +1933,10 @@ class KindergartenGame {
   }
 
   loadQuestion() {
+    // RESEARCH: Track when question starts for response time measurement
+    this.questionStartTime = Date.now();
+    this.currentQuestionAttempts = 0;
+    
     const activity = this.activities[this.currentActivity];
     const question =
       activity.questions[this.currentQuestion % activity.questions.length];
@@ -2356,21 +2381,41 @@ class KindergartenGame {
     // Show feedback
     this.showFeedback("✅ Great! 🎉", "correct");
 
-    // Update score
-    this.score += 10;
+    // RESEARCH SCORING: +1 for correct (simple binary for research study)
+    const pointsEarned = 1;
+    this.score += pointsEarned;
     document.getElementById("activityScore").textContent = this.score;
 
-    // Track session data
-    this.sessionData.push({
+    // Get question difficulty for research tracking
+    const difficulty = this.currentQuestionData.difficulty || "medium";
+    
+    // Track session data with COMPREHENSIVE RESEARCH METRICS
+    const questionData = {
       activity: this.currentActivity,
-      question: this.currentQuestion,
-      correct: true,
+      questionNumber: this.currentQuestion,
+      isCorrect: true,
+      pointsEarned: pointsEarned,
+      difficulty: difficulty,
       timestamp: Date.now(),
-    });
+      responseTime: this.questionStartTime ? Date.now() - this.questionStartTime : 0,
+      attemptNumber: this.currentQuestionAttempts || 1
+    };
+    this.sessionData.push(questionData);
 
     // Update stats
     this.stats.totalQuestionsAnswered++;
     this.stats.correctAnswers++;
+    
+    // RESEARCH: Calculate and track accuracy percentage
+    this.stats.accuracy = (this.stats.correctAnswers / this.stats.totalQuestionsAnswered) * 100;
+    
+    // RESEARCH: Track learning curve over time
+    if (!this.stats.learningCurve) this.stats.learningCurve = [];
+    this.stats.learningCurve.push({
+      questionNumber: this.stats.totalQuestionsAnswered,
+      accuracy: this.stats.accuracy,
+      timestamp: Date.now()
+    });
 
     // Check for achievements
     this.checkAchievements();
@@ -2403,13 +2448,40 @@ class KindergartenGame {
     // Show feedback
     this.showFeedback("💪 Try Again!", "incorrect");
 
-    // Track session data
-    this.sessionData.push({
+    // RESEARCH SCORING: No deduction - just track incorrect response
+    const pointsEarned = 0;
+    const difficulty = this.currentQuestionData.difficulty || "medium";
+    const selectedAnswer = this.selectedOption || "no_response";
+    
+    // Track session data with COMPREHENSIVE RESEARCH METRICS
+    const questionData = {
       activity: this.currentActivity,
-      question: this.currentQuestion,
-      correct: false,
+      questionNumber: this.currentQuestion,
+      isCorrect: false,
+      pointsEarned: pointsEarned,
+      selectedAnswer: String(selectedAnswer),
+      correctAnswer: String(this.currentQuestionData?.target || "unknown"),
+      difficulty: difficulty,
       timestamp: Date.now(),
+      responseTime: this.questionStartTime ? Date.now() - this.questionStartTime : 0,
+      attemptNumber: this.currentQuestionAttempts || 1
+    };
+    this.sessionData.push(questionData);
+
+    // Update stats
+    this.stats.totalQuestionsAnswered++;
+    
+    // RESEARCH: Calculate and track accuracy percentage
+    this.stats.accuracy = (this.stats.correctAnswers / this.stats.totalQuestionsAnswered) * 100;
+    
+    // RESEARCH: Track learning curve over time
+    if (!this.stats.learningCurve) this.stats.learningCurve = [];
+    this.stats.learningCurve.push({
+      questionNumber: this.stats.totalQuestionsAnswered,
+      accuracy: this.stats.accuracy,
+      timestamp: Date.now()
     });
+    
 
     // Update stats
     this.stats.totalQuestionsAnswered++;
@@ -3463,16 +3535,46 @@ class KindergartenGame {
 
 // ==================== INITIALIZE GAME ====================
 
-const game = new KindergartenGame();
+// Ensure game initializes after all scripts load
+let gameInstance = null;
+
+function initializeGame() {
+  if (!gameInstance) {
+    gameInstance = new KindergartenGame();
+    console.log("✅ Game initialized successfully");
+  }
+}
+
+// Initialize on DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeGame);
+} else {
+  // DOM already loaded
+  initializeGame();
+}
+
+// Also initialize after window load for safety
+window.addEventListener('load', () => {
+  if (!gameInstance) {
+    initializeGame();
+  }
+});
+
+// Make game globally accessible
+const game = gameInstance || new KindergartenGame();
 
 // Auto-save progress every minute
 setInterval(() => {
-  game.saveSavedProgress();
+  if (game && game.saveSavedProgress) {
+    game.saveSavedProgress();
+  }
 }, 60000);
 
 // Export data on page unload
 window.addEventListener("beforeunload", () => {
-  game.saveSavedProgress();
+  if (game && game.saveSavedProgress) {
+    game.saveSavedProgress();
+  }
 });
 
 // ==================== SERVICE WORKER REGISTRATION (OFFLINE SUPPORT) ====================

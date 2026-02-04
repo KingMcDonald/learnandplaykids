@@ -169,9 +169,11 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response.ok) {
+        // Only cache successful responses and clone before returning
+        if (response.ok && (response.status === 200 || response.status === 304)) {
+          const responseToCache = response.clone();
           caches.open(RUNTIME_CACHE).then((cache) => {
-            cache.put(request, response.clone());
+            cache.put(request, responseToCache);
           });
         }
         return response;

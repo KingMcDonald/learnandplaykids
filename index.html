@@ -17,6 +17,16 @@
     <link rel="apple-touch-icon" href="assets/Brainy_Web_App.png">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css" />
+    <script>
+      // Global error handler for debugging
+      window.addEventListener('error', (e) => {
+        console.error('❌ JavaScript Error:', e.message, 'at', e.filename, ':', e.lineno);
+      });
+      window.addEventListener('unhandledrejection', (e) => {
+        console.error('❌ Unhandled Promise:', e.reason);
+      });
+      console.log('✅ App starting...');
+    </script>
   </head>
   <body>
     <!-- ==================== LOADING SCREEN ==================== -->
@@ -494,11 +504,18 @@
     <!-- Admin Panel -->
     <div id="adminPanel" class="admin-panel hidden">
       <div class="admin-header">
-        <h2>📊 Admin Dashboard</h2>
-        <button id="adminLogoutBtn" class="admin-btn-logout">Logout</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+            <span>📊</span> Admin Dashboard
+          </h2>
+          <div style="display: flex; gap: 10px;">
+            <button id="adminSyncBtn" class="admin-btn-logout" title="Sync all data to cloud">☁️ Sync</button>
+            <button id="adminLogoutBtn" class="admin-btn-logout">🚪 Logout</button>
+          </div>
+        </div>
       </div>
 
-      <!-- Admin Statistics -->
+      <!-- Admin Statistics & Charts -->
       <div id="adminStats" class="admin-stats"></div>
 
       <!-- Admin Controls -->
@@ -508,34 +525,36 @@
             type="text"
             id="adminSearchInput"
             class="admin-search-input"
-            placeholder="🔍 Search users..."
+            placeholder="🔍 Search by name or ID..."
           />
         </div>
         <div class="admin-buttons">
           <button id="adminRefreshBtn" class="admin-btn-small">🔄 Refresh</button>
           <button id="adminExportBtn" class="admin-btn-small">📥 JSON</button>
           <button id="adminExportCSVBtn" class="admin-btn-small">📊 CSV</button>
-          <button id="adminClearBtn" class="admin-btn-small admin-btn-danger">🗑️ Clear All</button>
+          <button id="adminClearBtn" class="admin-btn-small admin-btn-danger">🗑️ Clear</button>
         </div>
       </div>
 
-      <!-- Users Table -->
+      <!-- Users Table with Enhanced Columns -->
       <div class="admin-table-container">
         <table class="admin-users-table">
           <thead>
             <tr>
               <th>#</th>
-              <th>User Name</th>
-              <th>Activities Completed</th>
-              <th>Total Score</th>
-              <th>Last Activity</th>
-              <th>Sync Status</th>
+              <th>Name</th>
+              <th>Activities</th>
+              <th>Score</th>
+              <th>Accuracy</th>
+              <th>Last Login</th>
+              <th>Sync</th>
+              <th>Plant</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="adminUsersTableBody">
             <tr>
-              <td colspan="7" class="admin-no-data">Loading users...</td>
+              <td colspan="9" class="admin-no-data" style="padding: 40px; text-align: center;">Loading users...</td>
             </tr>
           </tbody>
         </table>
@@ -543,6 +562,7 @@
     </div>
 
     <script src="additional.js"></script>
+    <script src="supabase.js"></script>
     <script src="sync.js"></script>
     <script src="admin.js"></script>
     <script src="script.js"></script>
