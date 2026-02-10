@@ -123,16 +123,21 @@ class KindergartenGame {
     };
 
     // Game Features
-    this.soundEnabled = true;
+    this.soundEnabled = localStorage.getItem("soundEnabled") !== "false";
     this.achievements = this.loadAchievements();
     this.dailyChallenge = this.initializeDailyChallenge();
     this.streak = 0;
     this.theme = "default";
     this.stats = this.loadStats();
 
+    // Double-tap confirmation system
+    this.pendingSelection = null;
+
     // BGM System
     this.bgmEnabled = localStorage.getItem("bgmEnabled") !== "false";
-    this.bgmVolume = parseFloat(localStorage.getItem("bgmVolume")) || 0.5;
+    // BGM volume is capped at 0.2, so default is 0.1 (mid-range in the 0-0.2 scale)
+    let savedBGMVolume = parseFloat(localStorage.getItem("bgmVolume")) || 0.1;
+    this.bgmVolume = Math.min(0.2, savedBGMVolume); // Ensure cap is respected
     this.bgmAudio = null;
 
     // Sound library (base64 encoded simple tones)
@@ -171,12 +176,20 @@ class KindergartenGame {
     this.soundEnabled = localStorage.getItem("soundEnabled") !== "false";
     this.streak = parseInt(localStorage.getItem("streak")) || 0;
 
+
+
     // Setup modal close button
     const closeModalBtn = document.getElementById("closeModal");
     if (closeModalBtn) {
       closeModalBtn.onclick = () => this.closeCountModal();
     }
   }
+
+
+
+
+
+
 
   closeCountModal() {
     const modal = document.getElementById("countModal");
@@ -201,6 +214,11 @@ class KindergartenGame {
   }
 
   showBGMNotification() {
+    // Check if notification already exists to prevent duplicates
+    if (document.querySelector(".bgm-notification")) {
+      return;
+    }
+    
     // Show notification that BGM is available - always show even after login
     const notification = document.createElement("div");
     notification.className = "bgm-notification";
@@ -1786,23 +1804,10 @@ class KindergartenGame {
     
     console.log(`💾 Game saved for ${this.userName} (ID: ${userId})`);
     
-    // ========== CLOUD SYNC ==========
-    // Sync to cloud in background (don't block game)
-    this.syncToCloud(userId, this.userName, gameData);
+
   }
 
-  syncToCloud(userId, userName, gameData) {
-    // Background sync to Supabase - non-blocking
-    // Safety check: if CloudSyncManager not ready, skip silently
-    if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager) {
-      CloudSyncManager.syncToCloud(userId, userName, gameData).catch(e => {
-        console.debug("Background sync scheduled:", e);
-      });
-      console.debug("☁️ Queued for Supabase sync...");
-    } else {
-      console.debug("⚠️ CloudSyncManager not available - local save only");
-    }
-  }
+
 
 
   loadSavedProgress() {
@@ -1889,6 +1894,16 @@ class KindergartenGame {
   startActivity(activityType) {
     this.currentActivity = activityType;
     this.currentQuestion = 0;
+    
+    // Increment session count when activity starts (including incomplete sessions)
+    this.stats.totalSessions++;
+    this.stats.lastPlayDate = new Date().toISOString();
+    if (!this.stats.gamesPlayed[activityType]) {
+      this.stats.gamesPlayed[activityType] = 0;
+    }
+    this.stats.gamesPlayed[activityType]++;
+    this.saveGameState();
+    
     // 🔄 REGENERATE FRESH QUESTIONS EVERY TIME - NO REPETITION!
     this.activities[activityType].questions =
       this.generateFreshQuestions(activityType);
@@ -1996,7 +2011,19 @@ class KindergartenGame {
     question.options.forEach((option, index) => {
       const btn = document.createElement("button");
       btn.className = "option-btn";
-      btn.onclick = () => this.checkAnswer(option, question.target);
+      btn.dataset.optionValue = option; // Store the option value for comparison
+      
+      // Add visual feedback for button press
+      btn.addEventListener("mousedown", () => btn.classList.add("active"));
+      btn.addEventListener("mouseup", () => btn.classList.remove("active"));
+      btn.addEventListener("mouseleave", () => btn.classList.remove("active"));
+      btn.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        btn.classList.add("active");
+      });
+      btn.addEventListener("touchend", () => btn.classList.remove("active"));
+      
+      btn.onclick = () => this.handleOptionClick(btn, option, question.target);
 
       // Handle different activity types
       if (question.type === "shape") {
@@ -2350,6 +2377,55 @@ class KindergartenGame {
     this.speak(question.sound);
   }
 
+  handleOptionClick(buttonElement, selected, target) {
+    // Ignore clicks on disabled buttons
+    if (buttonElement.disabled) return;
+    
+    // Check if this is the same button being clicked again (confirmation tap)
+    if (this.pendingSelection === selected) {
+      // Second tap - confirm the answer
+      this.clearPendingSelection();
+      this.playSound("confirm");
+      this.checkAnswer(selected, target);
+    } else {
+      // First tap - mark as pending and await confirmation
+      this.clearPendingSelection();
+      this.pendingSelection = selected;
+      buttonElement.classList.add("pending");
+      
+      // Play audio feedback for first tap
+      this.playSound("pending");
+      
+      // Show visual feedback
+      const instructionEl = document.getElementById("instruction");
+      if (instructionEl) {
+        instructionEl.innerHTML = "✋ <strong>Tap again to confirm!</strong>";
+        instructionEl.style.color = "#f59e0b";
+        instructionEl.style.fontSize = "20px";
+        instructionEl.style.fontWeight = "bold";
+      }
+    }
+  }
+
+  clearPendingSelection() {
+    if (this.pendingSelection !== null) {
+      // Remove pending class from all buttons
+      document.querySelectorAll(".option-btn.pending").forEach((btn) => {
+        btn.classList.remove("pending");
+      });
+      this.pendingSelection = null;
+      
+      // Reset instruction text
+      const instructionEl = document.getElementById("instruction");
+      if (instructionEl && instructionEl.textContent.includes("Tap again")) {
+        instructionEl.innerHTML = "Listen...";
+        instructionEl.style.color = "#666";
+        instructionEl.style.fontSize = "18px";
+        instructionEl.style.fontWeight = "normal";
+      }
+    }
+  }
+
   checkAnswer(selected, target) {
     // Store the selected option for feedback
     this.selectedOption = selected;
@@ -2386,10 +2462,8 @@ class KindergartenGame {
     this.score += pointsEarned;
     document.getElementById("activityScore").textContent = this.score;
 
-    // Get question difficulty for research tracking
+    // Get question data for research tracking
     const difficulty = this.currentQuestionData.difficulty || "medium";
-    
-    // Track session data with COMPREHENSIVE RESEARCH METRICS
     const questionData = {
       activity: this.currentActivity,
       questionNumber: this.currentQuestion,
@@ -2400,22 +2474,9 @@ class KindergartenGame {
       responseTime: this.questionStartTime ? Date.now() - this.questionStartTime : 0,
       attemptNumber: this.currentQuestionAttempts || 1
     };
-    this.sessionData.push(questionData);
-
-    // Update stats
-    this.stats.totalQuestionsAnswered++;
-    this.stats.correctAnswers++;
     
-    // RESEARCH: Calculate and track accuracy percentage
-    this.stats.accuracy = (this.stats.correctAnswers / this.stats.totalQuestionsAnswered) * 100;
-    
-    // RESEARCH: Track learning curve over time
-    if (!this.stats.learningCurve) this.stats.learningCurve = [];
-    this.stats.learningCurve.push({
-      questionNumber: this.stats.totalQuestionsAnswered,
-      accuracy: this.stats.accuracy,
-      timestamp: Date.now()
-    });
+    // Update statistics and tracking (centralized logic)
+    this.updateStatisticsAndTracking(questionData, true);
 
     // Check for achievements
     this.checkAchievements();
@@ -2466,27 +2527,9 @@ class KindergartenGame {
       responseTime: this.questionStartTime ? Date.now() - this.questionStartTime : 0,
       attemptNumber: this.currentQuestionAttempts || 1
     };
-    this.sessionData.push(questionData);
-
-    // Update stats
-    this.stats.totalQuestionsAnswered++;
     
-    // RESEARCH: Calculate and track accuracy percentage
-    this.stats.accuracy = (this.stats.correctAnswers / this.stats.totalQuestionsAnswered) * 100;
-    
-    // RESEARCH: Track learning curve over time
-    if (!this.stats.learningCurve) this.stats.learningCurve = [];
-    this.stats.learningCurve.push({
-      questionNumber: this.stats.totalQuestionsAnswered,
-      accuracy: this.stats.accuracy,
-      timestamp: Date.now()
-    });
-    
-
-    // Update stats
-    this.stats.totalQuestionsAnswered++;
-    this.stats.wrongAnswers++;
-    localStorage.setItem("gameStats", JSON.stringify(this.stats));
+    // Update statistics and tracking (centralized logic)
+    this.updateStatisticsAndTracking(questionData, false);
 
     // Play error sound
     this.playSound("incorrect");
@@ -2499,6 +2542,31 @@ class KindergartenGame {
       });
       document.getElementById("feedback").classList.add("hidden");
     }, 1200);
+  }
+
+  updateStatisticsAndTracking(questionData, isCorrect) {
+    // Centralized method to update stats and track learning
+    // Add question data to session
+    this.sessionData.push(questionData);
+    
+    // Update stats totals
+    this.stats.totalQuestionsAnswered++;
+    if (isCorrect) {
+      this.stats.correctAnswers++;
+    } else {
+      this.stats.wrongAnswers++;
+    }
+    
+    // Calculate and track accuracy percentage
+    this.stats.accuracy = (this.stats.correctAnswers / this.stats.totalQuestionsAnswered) * 100;
+    
+    // Track learning curve over time
+    if (!this.stats.learningCurve) this.stats.learningCurve = [];
+    this.stats.learningCurve.push({
+      questionNumber: this.stats.totalQuestionsAnswered,
+      accuracy: this.stats.accuracy,
+      timestamp: Date.now()
+    });
   }
 
   showFeedback(message, type) {
@@ -2678,32 +2746,40 @@ class KindergartenGame {
   // ==================== AUDIO SYSTEM ====================
 
   speak(text) {
-    // Use Web Speech API for text-to-speech with kid-friendly settings
-    if ("speechSynthesis" in window) {
+    // Use Web Speech API with optimized voice selection to reduce delays
+    if ("speechSynthesis" in window && this.soundEnabled) {
       // Cancel any ongoing speech
       speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
       // Kid-friendly voice settings
-      utterance.rate = 0.85; // Slower, more clear speech
-      utterance.pitch = 1.3; // Higher pitch for friendly tone
-      utterance.volume = 0.9; // Slightly lower to prevent harshness
+      utterance.rate = 0.9; // Slightly faster for responsiveness
+      utterance.pitch = 1.2; // Friendly pitch
+      utterance.volume = Math.max(0.5, this.bgmVolume); // Use BGM volume
       utterance.lang = "en-US";
       
-      // Try to use a child-friendly voice if available
-      const voices = speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        // Look for a female or kid-friendly voice
-        const childVoice = voices.find(v => 
-          v.name.toLowerCase().includes('female') || 
-          v.name.toLowerCase().includes('woman') ||
-          v.name.toLowerCase().includes('child') ||
-          v.name.toLowerCase().includes('kid')
-        ) || voices[0];
+      // Use cached voices or get fresh ones
+      if (!this.cachedVoices) {
+        this.cachedVoices = speechSynthesis.getVoices();
+      }
+      
+      if (this.cachedVoices.length > 0) {
+        // Prefer female voice for kids, fallback to first available
+        const childVoice = this.cachedVoices.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes('female') || name.includes('woman') || name.includes('child') || name.includes('kid');
+        }) || this.cachedVoices[0];
         utterance.voice = childVoice;
       }
 
-      speechSynthesis.speak(utterance);
+      // Use set timeout to ensure speech synthesis is ready
+      setTimeout(() => {
+        try {
+          speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.debug("Speech synthesis unavailable");
+        }
+      }, 10);
     }
   }
 
@@ -2727,7 +2803,41 @@ class KindergartenGame {
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      if (type === "correct") {
+      if (type === "pending") {
+        // Soft tone for first tap confirmation
+        oscillator.frequency.value = 800;
+        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.1,
+        );
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+      } else if (type === "confirm") {
+        // Two-tone chime for confirmation
+        oscillator.frequency.value = 900;
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.15,
+        );
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.15);
+
+        // Second tone
+        const osc2 = audioContext.createOscillator();
+        const gain2 = audioContext.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioContext.destination);
+        osc2.frequency.value = 1100;
+        gain2.gain.setValueAtTime(0.2, audioContext.currentTime + 0.05);
+        gain2.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.2,
+        );
+        osc2.start(audioContext.currentTime + 0.05);
+        osc2.stop(audioContext.currentTime + 0.2);
+      } else if (type === "correct") {
         oscillator.frequency.value = 800;
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(
@@ -2778,39 +2888,55 @@ class KindergartenGame {
   // ==================== BGM SYSTEM ====================
 
   initializeBGM() {
-    // Create audio element for BGM if not already created
-    if (this.bgmAudio) {
-      this.bgmAudio.pause();
-      this.bgmAudio = null;
+    // Prevent re-initialization if audio already exists
+    if (this.bgmAudio && this.bgmAudio.src) {
+      return;
     }
 
+    // Create audio element for BGM
     this.bgmAudio = new Audio();
     this.bgmAudio.src = "assets/themeBGM.mp3";
     this.bgmAudio.loop = true;
     this.bgmAudio.volume = this.bgmVolume;
     this.bgmAudio.crossOrigin = "anonymous";
     
-    // Don't auto-play initially - user must press Play (browser gesture requirement)
-    // Respect existing this.bgmEnabled value (loaded from localStorage earlier)
+    // Preload audio for faster playback
+    this.bgmAudio.preload = "auto";
+    
+    // Handle errors gracefully (e.g., file not found, offline)
+    this.bgmAudio.onerror = () => {
+      console.debug("⚠️ BGM file not available - continuing without music");
+      this.bgmAvailable = false;
+    };
+    
+    this.bgmAudio.oncanplaythrough = () => {
+      this.bgmAvailable = true;
+    };
+    
+    // Set flag to indicate whether BGM is available
+    this.bgmAvailable = true;
   }
 
   playBGM() {
-    if (!this.bgmAudio) {
+    // Only attempt to play if BGM is available
+    if (!this.bgmAudio || !this.bgmAvailable) {
       this.initializeBGM();
     }
     
+    if (!this.bgmAudio) return;
+    
     try {
-      // Make sure audio is not paused before playing
+      // Only play if currently paused
       if (this.bgmAudio.paused) {
         const playPromise = this.bgmAudio.play();
         if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            console.log("BGM autoplay prevented by browser - user gesture required");
+          playPromise.catch((error) => {
+            console.debug("BGM playback prevented - user gesture may be required or file unavailable");
           });
         }
       }
     } catch (error) {
-      console.log("BGM playback error:", error);
+      console.debug("BGM playback unavailable:", error.message);
     }
   }
 
@@ -2828,17 +2954,19 @@ class KindergartenGame {
       normalizedVolume = volume / 100;
     }
     
-    this.bgmVolume = Math.max(0, Math.min(1, normalizedVolume));
+    // Cap BGM volume at 0.2 maximum (20% is the max actual volume)
+    // So slider 100% = 0.2 actual volume, slider 0% = 0.0 actual volume
+    this.bgmVolume = Math.max(0, Math.min(0.2, normalizedVolume));
     localStorage.setItem("bgmVolume", this.bgmVolume);
 
     if (this.bgmAudio) {
       this.bgmAudio.volume = this.bgmVolume;
     }
     
-    // Update the display immediately
+    // Update the display immediately (show percentage relative to 0-20 range)
     const bgmPercent = document.getElementById("bgmVolPercent");
     if (bgmPercent) {
-      bgmPercent.textContent = Math.round(this.bgmVolume * 100) + "%";
+      bgmPercent.textContent = Math.round((this.bgmVolume / 0.2) * 100) + "%";
     }
   }
 
@@ -2863,8 +2991,6 @@ class KindergartenGame {
     const existingModal = document.getElementById("soundSettingsModal");
     if (existingModal) existingModal.remove();
 
-    const masterVolume = this.soundEnabled ? 1 : 0;
-
     const html = `
       <div id="soundSettingsModal" class="modal show">
         <div class="modal-content modal-sound-settings">
@@ -2872,31 +2998,14 @@ class KindergartenGame {
             <h2>🔊 Sound & Music Settings</h2>
             <button class="modal-close" onclick="game.closeModal('soundSettingsModal')">✕</button>
           </div>
-          <div class="modal-body">
-            <!-- Master Volume -->
-            <div class="sound-setting-item">
-              <div class="setting-label">
-                <span class="setting-icon">🔉</span>
-                <span class="setting-name">Master Volume</span>
-                <span class="volume-percent" id="masterVolPercent">100%</span>
-              </div>
-              <input 
-                type="range" 
-                class="volume-slider" 
-                id="masterVolSlider"
-                min="0" 
-                max="100" 
-                value="${masterVolume * 100}"
-                oninput="game.setMasterVolume(this.value / 100)"
-              />
-            </div>
+          <div class="modal-body">        
 
             <!-- BGM Volume -->
             <div class="sound-setting-item">
               <div class="setting-label">
                 <span class="setting-icon">🎵</span>
                 <span class="setting-name">Background Music</span>
-                <span class="volume-percent" id="bgmVolPercent">${Math.round(this.bgmVolume * 100)}%</span>
+                <span class="volume-percent" id="bgmVolPercent">${Math.round((this.bgmVolume / 0.2) * 100)}%</span>
               </div>
               <input 
                 type="range" 
@@ -2904,7 +3013,7 @@ class KindergartenGame {
                 id="bgmVolSlider"
                 min="0" 
                 max="100" 
-                value="${this.bgmVolume * 100}"
+                value="${(this.bgmVolume / 0.2) * 100}"
                 oninput="game.setBGMVolume(this.value / 100)"
               />
               <label class="toggle-label">
@@ -2960,33 +3069,24 @@ class KindergartenGame {
   }
 
   updateVolumeDisplay() {
-    const masterPercent = document.getElementById("masterVolPercent");
     const bgmPercent = document.getElementById("bgmVolPercent");
     const sfxPercent = document.getElementById("sfxVolPercent");
 
-    if (masterPercent) {
-      masterPercent.textContent = this.soundEnabled ? "100%" : "0%";
-    }
     if (bgmPercent) {
       bgmPercent.textContent = Math.round(this.bgmVolume * 100) + "%";
     }
     if (sfxPercent) {
-      sfxPercent.textContent = "100%";
+      sfxPercent.textContent = Math.round(this.sfxVolume * 100) + "%";
     }
-  }
-
-  setMasterVolume(volume) {
-    this.soundEnabled = volume > 0;
+     
+    // Enable/disable sound based on volume
+    this.soundEnabled = normalizedVolume > 0;
     localStorage.setItem("soundEnabled", this.soundEnabled);
 
-    const masterPercent = document.getElementById("masterVolPercent");
-    if (masterPercent) {
-      masterPercent.textContent = this.soundEnabled ? "100%" : "0%";
-    }
-
+    // Update the display
     const soundIcon = document.getElementById("soundIcon");
     if (soundIcon) {
-      soundIcon.textContent = this.soundEnabled ? "🔊" : "🔇";
+      soundIcon.textContent = normalizedVolume > 0 ? "🔊" : "🔇";
     }
   }
 
@@ -3020,6 +3120,7 @@ class KindergartenGame {
 
   saveAchievements() {
     localStorage.setItem("achievements", JSON.stringify(this.achievements));
+    this.saveGameState();
   }
 
   checkAchievements() {
@@ -3086,7 +3187,7 @@ class KindergartenGame {
       this.stats.gamesPlayed[this.currentActivity] = 0;
     }
     this.stats.gamesPlayed[this.currentActivity]++;
-    localStorage.setItem("gameStats", JSON.stringify(this.stats));
+    this.saveGameState();
   }
 
   getStatistics() {
