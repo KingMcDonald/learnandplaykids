@@ -2039,11 +2039,12 @@ class KindergartenGame {
       btn.addEventListener("mousedown", () => btn.classList.add("active"));
       btn.addEventListener("mouseup", () => btn.classList.remove("active"));
       btn.addEventListener("mouseleave", () => btn.classList.remove("active"));
-      btn.addEventListener("touchstart", (e) => {
-        e.preventDefault();
+      btn.addEventListener("touchstart", () => {
         btn.classList.add("active");
       });
-      btn.addEventListener("touchend", () => btn.classList.remove("active"));
+      btn.addEventListener("touchend", () => {
+        btn.classList.remove("active");
+      });
       
       btn.onclick = () => this.handleOptionClick(btn, option, question.target);
 
