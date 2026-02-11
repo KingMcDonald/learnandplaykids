@@ -222,7 +222,7 @@
       </div>
 
       <div class="garden-content">
-        <h2>🌱 <span id="nameOfPlayer"></span>'s Garden</h2>
+        <h2>🌱 <span id="nameOfPlayer" style="cursor: pointer;" title="Click 10 times to logout"></span>'s Garden</h2>
         <div class="plant-container">
           <div id="plant" class="plant-display">🌱</div>
           <div class="plant-info">
@@ -474,6 +474,27 @@
         <div id="modalObjects" class="objects-grid"></div>
 
         <button id="closeModal" class="audio-btn">Close</button>
+      </div>
+    </div>
+
+    <!-- ==================== LOGOUT CONFIRMATION MODAL ==================== -->
+    <div id="logoutModal" class="modal hidden">
+      <div class="modal-content">
+        <h2 style="color: #ef4444; margin-bottom: 20px;">⚠️ Logout Confirmation</h2>
+        <p id="logoutMessage" style="font-size: 18px; margin: 20px 0; text-align: center;">
+          You want to log out <strong id="logoutUsername"></strong>?
+        </p>
+        <p style="font-size: 16px; color: #666; margin: 15px 0; text-align: center;">
+          Your progress will be saved. You can log back in anytime! 📱
+        </p>
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+          <button class="main-btn" onclick="game.confirmLogout()" style="background: #ef4444; flex: 1;">
+            ✓ Logout
+          </button>
+          <button class="main-btn" onclick="game.cancelLogout()" style="background: #10b981; flex: 1;">
+            ✕ Cancel
+          </button>
+        </div>
       </div>
     </div>
 

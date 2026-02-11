@@ -20,9 +20,7 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family:
-    "Comic Sans MS", "Trebuchet MS", "Arial Rounded MT Bold", "Nunito",
-    "Comfortaa", cursive, sans-serif !important;
+  font-family: sans-serif !important;
 }
 
 body {

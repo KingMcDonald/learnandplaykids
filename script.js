@@ -11,6 +11,7 @@ class KindergartenGame {
     this.plantStageAtFinish = false; // Track if plant grew during activity
     this.sessionData = []; // For research tracking
     this.scoreClickCount = 0; // Track clicks on score for stats access
+    this.usernameClickCount = 0; // Track clicks on username for logout
 
     // Plant stages - unlimited growth with 20 stages
     this.plantStages = [
@@ -2715,11 +2716,14 @@ class KindergartenGame {
     if (this.userName) {
       if (nameOfPlayer) {
         nameOfPlayer.textContent = this.userName;
+        // Add click listener for logout
+        nameOfPlayer.addEventListener("click", () => this.handleUsernameClick());
       }
     } else {
       // If no userName, clear the span
       if (nameOfPlayer) {
         nameOfPlayer.textContent = "Friend";
+        nameOfPlayer.addEventListener("click", () => this.handleUsernameClick());
       }
     }
   }
@@ -3857,6 +3861,81 @@ class KindergartenGame {
     const report = this.getSessionReport();
     console.log("📊 SESSION REPORT:", report);
     return report;
+  }
+
+  // ==================== LOGOUT FUNCTIONALITY ====================
+
+  handleUsernameClick() {
+    this.usernameClickCount++;
+    
+    // Reset counter after 3 seconds of no clicks
+    if (this.usernameClickResetTimer) {
+      clearTimeout(this.usernameClickResetTimer);
+    }
+    this.usernameClickResetTimer = setTimeout(() => {
+      this.usernameClickCount = 0;
+    }, 3000);
+
+    // Show logout modal when 10 clicks reached
+    if (this.usernameClickCount >= 10) {
+      this.showLogoutModal();
+      this.usernameClickCount = 0; // Reset after showing
+    }
+  }
+
+  showLogoutModal() {
+    const modal = document.getElementById("logoutModal");
+    const usernameSpan = document.getElementById("logoutUsername");
+    
+    if (modal && usernameSpan) {
+      usernameSpan.textContent = this.userName;
+      modal.classList.remove("hidden");
+      modal.classList.add("show");
+    }
+  }
+
+  confirmLogout() {
+    // Hide the modal
+    const modal = document.getElementById("logoutModal");
+    if (modal) {
+      modal.classList.remove("show");
+      modal.classList.add("hidden");
+    }
+
+    // Clear the game state
+    this.resetGameState();
+    
+    // Clear local storage
+    localStorage.removeItem("kg_username");
+    this.usernameClickCount = 0;
+
+    // Redirect to start screen
+    this.showScreen("startScreen");
+    document.getElementById("userName").value = "";
+    document.getElementById("userName").focus();
+  }
+
+  cancelLogout() {
+    // Hide the modal
+    const modal = document.getElementById("logoutModal");
+    if (modal) {
+      modal.classList.remove("show");
+      modal.classList.add("hidden");
+    }
+
+    // Reset the click counter
+    this.usernameClickCount = 0;
+  }
+
+  resetGameState() {
+    this.currentActivity = null;
+    this.currentQuestion = 0;
+    this.score = 0;
+    this.plantStage = 0;
+    this.plantStageAtFinish = false;
+    this.sessionData = [];
+    this.scoreClickCount = 0;
+    this.usernameClickCount = 0;
   }
 }
 
