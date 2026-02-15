@@ -90,9 +90,9 @@ showStatsPage() {
                   <tbody>
                     ${dailyStats.map((day, idx) => \`
                       <tr style="background: \${idx % 2 === 0 ? '#f9f9f9' : 'white'}; border-bottom: 1px solid #eee;">
-                        <td style="padding: 12px; border: 1px solid #ddd; font-weight: 500;">\${day.date}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; font-weight: 500;"><span style="color: #333;">\${day.date}</span></td>
                         <td style="padding: 12px; text-align: center; border: 1px solid #ddd;"><span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 4px;">\${day.sessions}</span></td>
-                        <td style="padding: 12px; text-align: center; border: 1px solid #ddd;">\${day.totalTime}</td>
+                        <td style="padding: 12px; text-align: center; border: 1px solid #ddd;"><span style="color: #333;">\${day.totalTime}</span></td>
                         <td style="padding: 12px; text-align: center; border: 1px solid #ddd;"><span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px;">\${day.score}</span></td>
                         <td style="padding: 12px; text-align: center; border: 1px solid #ddd;"><span style="background: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px;">\${day.streak}</span></td>
                       </tr>
