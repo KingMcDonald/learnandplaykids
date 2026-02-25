@@ -122,6 +122,10 @@ class KindergartenGame {
         name: "Sort & Learn",
         questions: this.generateCategoryQuestions(),
       },
+      animals: {
+        name: "Animal Sounds",
+        questions: this.generateAnimalSoundsQuestions(),
+      },
     };
 
     // Game Features
@@ -1289,13 +1293,23 @@ class KindergartenGame {
 
     return selectedGroups.map((group) => {
       const correctRhyme = group.rhymes[Math.floor(Math.random() * group.rhymes.length)];
-      const distractors = group.rhymes.filter(r => r.word !== correctRhyme.word).slice(0, 3);
+      
+      // Get distractors from OTHER rhyme groups (different rhyme endings)
+      const otherGroups = availableGroups.filter(g => g !== group);
+      const shuffledOtherGroups = this.shuffleArray(otherGroups);
+      
+      const distractors = [];
+      for (let g of shuffledOtherGroups) {
+        if (distractors.length >= 3) break;
+        const randomWord = g.rhymes[Math.floor(Math.random() * g.rhymes.length)];
+        distractors.push(randomWord.word);
+      }
 
       return {
         type: "rhyme",
         question: `What rhymes with "${group.word1}"?`,
         target: correctRhyme.word,
-        options: this.shuffleArray([correctRhyme.word, ...distractors.map(d => d.word)]),
+        options: this.shuffleArray([correctRhyme.word, ...distractors]),
         sound: `What word rhymes with ${group.word1}?`,
         icon: group.icon,
         correctRhymeIcon: correctRhyme.icon,
@@ -1464,6 +1478,74 @@ class KindergartenGame {
     }
 
     return questions;
+  }
+
+  generateAnimalSoundsQuestions() {
+    // 🐾 ANIMAL SOUNDS WITH DIFFICULTY PROGRESSION - KID-FRIENDLY SOUNDS
+    const allAnimals = [
+      // EASY LEVEL - Stage 0-2 (Common familiar animals)
+    { animal: "Dog", emoji: "🐶", sound: "Woof woof woof! The doggy says woof! Bark bark bark!", level: 1 },
+    { animal: "Cat", emoji: "🐱", sound: "Meow meow meow! The kitty says meow! Meow!", level: 1 },
+    { animal: "Cow", emoji: "🐄", sound: "Moo moo moo! The cow says moo! Mooooo!", level: 1 },
+    { animal: "Sheep", emoji: "🐑", sound: "Ba! ba! baa! The sheep says ba!! Ba! ba!!", level: 1 },
+    { animal: "Pig", emoji: "🐷", sound: "Oink oink oink! The piggy says oink! Oink oink!", level: 1 },
+
+    // MEDIUM LEVEL - Stage 3-6
+    { animal: "Duck", emoji: "🦆", sound: "Quack quack quack! The duck says quack! Quack quack!", level: 2 },
+    { animal: "Rooster", emoji: "🐓", sound: "Cock-a-doodle-doo! The rooster says cock-a-doodle-doo! Early morning!", level: 2 },
+    { animal: "Bee", emoji: "🐝", sound: "Buzzz buzzz buzzz! The bee says buzz! Bzzzzzz!", level: 2 },
+    { animal: "Bird", emoji: "🐦", sound: "Tweet tweet tweet! The bird says tweet tweet! Chirp chirp!", level: 2 },
+    { animal: "Horse", emoji: "🐴", sound: "Neigh neigh neiiiigh! The horse says neigh! Whinny whinny!", level: 2 },
+    { animal: "Lion", emoji: "🦁", sound: "Roooaaarrr! The lion roars! Roar roar roar!", level: 2 },
+    { animal: "Monkey", emoji: "🐵", sound: "Oooh oooh oooh! The monkey says ooh ooh! Ah ah ah!", level: 2 },
+
+    // HARD LEVEL - Stage 7+
+    { animal: "Elephant", emoji: "🐘", sound: "Paaawooo paaawooo! The elephant trumpets! Trumpet sound!", level: 3 },
+    { animal: "Snake", emoji: "🐍", sound: "Hissssss! The snake hisses! Psssss!", level: 3 },
+    { animal: "Frog", emoji: "🐸", sound: "Ribbit ribbit ribbit! The frog says ribbit! Croak croak!", level: 3 },
+    { animal: "Owl", emoji: "🦉", sound: "Hoo hoo hoooo! The owl hoots! Whooo whooo!", level: 3 },
+    { animal: "Wolf", emoji: "🐺", sound: "Aroooooo! The wolf howls! Howwwwl!", level: 3 },
+    { animal: "Bear", emoji: "🐻", sound: "Growwwl growwwl! The bear growls! Roarrr!", level: 3 },
+    ]
+
+    // Determine max difficulty level based on plant stage
+    let maxLevel = 1;
+    if (this.plantStage >= 3) maxLevel = 2;
+    if (this.plantStage >= 7) maxLevel = 3;
+
+    // Get available animals for this difficulty
+    const availableAnimals = allAnimals.filter(a => a.level <= maxLevel);
+
+    // Determine number of options
+    let numOptions = 4;
+    if (this.plantStage >= 5) numOptions = 5;
+
+    // Select 5 questions with diverse animals
+    const selectedAnimals = this.shuffleArray(availableAnimals).slice(0, 5);
+    const animalMap = {};
+    availableAnimals.forEach((a) => {
+      animalMap[a.animal] = a.emoji;
+    });
+
+    return selectedAnimals.map((a) => {
+      // Select distractors from same or lower difficulty level
+      const possibleDistractions = availableAnimals.filter(x => x.animal !== a.animal);
+      const distractors = this.shuffleArray(possibleDistractions)
+        .slice(0, numOptions - 1)
+        .map(x => x.animal);
+
+      const optionAnimals = this.shuffleArray([a.animal, ...distractors]);
+
+      return {
+        type: "animals",
+        question: `Which animal makes this sound?`,
+        target: a.animal,
+        options: optionAnimals,
+        optionIcons: optionAnimals.map((name) => animalMap[name]),
+        sound: `${a.sound}. This is a ${a.animal}!`,
+        icon: a.emoji,
+      };
+    });
   }
 
   generateCategoryQuestions() {
@@ -1874,7 +1956,7 @@ class KindergartenGame {
   // ==================== UI HELPERS ====================
 
   showWelcomeMessage() {
-    const message = `Hi ${this.userName}! Welcome to the Garden! Let's learn and have fun!`;
+    const message = `Hi ${this.userName}! Welcome to the Neuro Comrade. Let's learn and have fun!`;
     this.speak(message);
   }
 
@@ -1964,6 +2046,8 @@ class KindergartenGame {
         return this.generatePatternQuestions();
       case "category":
         return this.generateCategoryQuestions();
+      case "animals":
+        return this.generateAnimalSoundsQuestions();
       default:
         return [];
     }
@@ -2090,6 +2174,9 @@ class KindergartenGame {
         btn.innerHTML = `<span class="option-emoji" style="font-size: 120px;">${option}</span>`;
       } else if (question.type === "category") {
         btn.innerHTML = `<span class="option-emoji" style="font-size: 120px;">${option}</span>`;
+      } else if (question.type === "animals") {
+        const icon = question.optionIcons[index] || "";
+        btn.innerHTML = `<span class="option-emoji" style="font-size: 130px;">${icon}</span><span class="option-label" style="font-size: 28px; font-weight: 900;">${question.options[index]}</span>`;
       } else {
         btn.innerHTML = `<span class="option-label" style="font-size: 50px; font-weight: 900;">${option}</span>`;
       }
@@ -2102,6 +2189,14 @@ class KindergartenGame {
 
     // Auto-play instruction after a short delay
     setTimeout(() => this.playInstruction(), 500);
+    
+    // For animals activity, add visual effect
+    if (question.type === "animals") {
+      const instruction = document.getElementById("instruction");
+      if (instruction) {
+        instruction.innerHTML = `🎵🐾 <strong>Listen to the sound and find the animal!</strong> 🐾🎵`;
+      }
+    }
   }
 
   initializeMemoryGame(question, container) {
@@ -2397,7 +2492,24 @@ class KindergartenGame {
 
   playInstruction() {
     const question = this.currentQuestionData;
+    
+    // For animals, add visual bounce effect
+    if (question.type === "animals") {
+      this.showAnimalBounceEffect();
+    }
+    
     this.speak(question.sound);
+  }
+
+  showAnimalBounceEffect() {
+    const instruction = document.getElementById("instruction");
+    if (!instruction) return;
+    
+    // Add bounce animation
+    instruction.style.animation = "none";
+    setTimeout(() => {
+      instruction.style.animation = "bounce 0.6s ease-in-out";
+    }, 10);
   }
 
   handleOptionClick(buttonElement, selected, target) {
@@ -2424,7 +2536,7 @@ class KindergartenGame {
       if (instructionEl) {
         instructionEl.innerHTML = "✋ <strong>Tap again to confirm!</strong>";
         instructionEl.style.color = "#f59e0b";
-        instructionEl.style.fontSize = "20px";
+        instructionEl.style.fontSize = "44px";
         instructionEl.style.fontWeight = "bold";
       }
     }
@@ -2442,9 +2554,9 @@ class KindergartenGame {
       const instructionEl = document.getElementById("instruction");
       if (instructionEl && instructionEl.textContent.includes("Tap again")) {
         instructionEl.innerHTML = "Listen...";
-        instructionEl.style.color = "#666";
-        instructionEl.style.fontSize = "18px";
-        instructionEl.style.fontWeight = "normal";
+        instructionEl.style.color = "#764ba2";
+        instructionEl.style.fontSize = "44px";
+        instructionEl.style.fontWeight = "900";
       }
     }
   }
@@ -2914,6 +3026,49 @@ class KindergartenGame {
     }
   }
 
+  playAnimalCelebrationSound() {
+    // Fun celebratory sound for identifying animals correctly
+    try {
+      const audioContext = new (
+        window.AudioContext || window.webkitAudioContext
+      )();
+
+      if (audioContext.state === "suspended") {
+        audioContext.resume().catch(() => {
+          console.log("Could not resume audio context");
+        });
+      }
+
+      // Play a fun ascending melody
+      const celebrationNotes = [
+        { freq: 523, duration: 0.1 },
+        { freq: 659, duration: 0.1 },
+        { freq: 784, duration: 0.1 },
+        { freq: 987, duration: 0.2 },
+        { freq: 1047, duration: 0.3 }
+      ];
+
+      celebrationNotes.forEach((note, index) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        const startTime = audioContext.currentTime + index * 0.12;
+        osc.frequency.value = note.freq;
+        gain.gain.setValueAtTime(0.25, startTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.01,
+          startTime + note.duration,
+        );
+        osc.start(startTime);
+        osc.stop(startTime + note.duration);
+      });
+    } catch (error) {
+      console.log("Animal celebration sound not available:", error);
+    }
+  }
+
   // ==================== BGM SYSTEM ====================
 
   initializeBGM() {
@@ -3355,7 +3510,7 @@ class KindergartenGame {
       <div id="statsModal" class="modal show">
         <div class="modal-content modal-statistics">
           <div class="modal-header">
-            <h2>📊 Your Statistics</h2>
+            <h2>Your Statistics</h2>
             <button class="modal-close" onclick="game.closeModal('statsModal')">✕</button>
           </div>
           <div class="modal-body">
@@ -3640,7 +3795,7 @@ class KindergartenGame {
         <div class="modal-content stats-modal" style="max-width: 95%; max-height: 95vh; overflow-y: auto; border-radius: 15px;">
           <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0; display: flex; justify-content: space-between; align-items: center;">
             <h2 style="margin: 0; display: flex; align-items: center; gap: 10px; font-size: 28px;">
-              📊 ${this.userName}'s Stats
+              ${this.userName}'s Stats
             </h2>
             <button class="modal-close" onclick="game.closeModal('statsPageModal')" style="background: white; color: #667eea; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer;">✕</button>
           </div>
@@ -3650,7 +3805,7 @@ class KindergartenGame {
             <!-- USER STATISTICS SECTION -->
             <div style="margin-bottom: 30px;">
               <h3 style="color: #667eea; font-size: 22px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                📈 User Statistics
+                User Statistics
               </h3>
               
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
@@ -3701,7 +3856,7 @@ class KindergartenGame {
             <!-- USER CONSISTENCY SECTION -->
             <div>
               <h3 style="color: #667eea; font-size: 22px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                📅 Daily Activity
+                Daily Activity
               </h3>
               
               <div style="background: white; border-radius: 10px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
@@ -3718,9 +3873,9 @@ class KindergartenGame {
                   <tbody>
                     ${dailyStats.map((day, idx) => `
                       <tr style="background: ${idx % 2 === 0 ? '#f9f9f9' : 'white'}; border-bottom: 1px solid #eee;">
-                        <td style="padding: 12px; border: 1px solid #ddd; font-weight: 500;">${day.date}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; font-weight: 500;"><span style="background: #ec4899; color: white; padding: 4px 8px; border-radius: 4px;">${day.date}</span></td>
                         <td style="padding: 12px; text-align: center; border: 1px solid #ddd;"><span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 4px;">${day.sessions}</span></td>
-                        <td style="padding: 12px; text-align: center; border: 1px solid #ddd;">${day.totalTime}</td>
+                        <td style="padding: 12px; text-align: center; border: 1px solid #ddd;"><span style="background: #764ba2; color: white; padding: 4px 8px; border-radius: 4px;">${day.totalTime}</span></td>
                         <td style="padding: 12px; text-align: center; border: 1px solid #ddd;"><span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px;">${day.score}</span></td>
                         <td style="padding: 12px; text-align: center; border: 1px solid #ddd;"><span style="background: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px;">${day.streak}</span></td>
                       </tr>

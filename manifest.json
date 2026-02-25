@@ -1,5 +1,5 @@
 {
-  "name": "Play & Learn Kids - Educational Game",
+  "name": "Neurocomrade - Educational Game",
   "short_name": "Play & Learn Kids",
   "description": "An interactive educational game for kids to learn through fun activities while growing their virtual garden",
   "start_url": "/",
@@ -38,7 +38,7 @@
   ],
   "shortcuts": [
     {
-      "name": "Start Learning",
+      "name": "Neurocomrade",
       "short_name": "Play",
       "description": "Start playing Learn & Play Kids",
       "url": "/?source=pwa-shortcut",

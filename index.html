@@ -6,12 +6,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <title>Play & Learn Kids - Design For Kids To Play and Learn</title>
+    <title>Neurocomrade - Design For Kids To Play and Learn</title>
     <meta name="description" content="Learn & Play Kids - An interactive educational game where kids plant gardens, complete activities, and grow magical plants. Works online and offline!">
     <meta name="theme-color" content="#667eea">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Learn & Play">
+    <meta name="apple-mobile-web-app-title" content="Neurocomrade">
     
     <link rel="icon" href="assets/Brainy_Web_App.png" type="image/png" />
     <link rel="apple-touch-icon" href="assets/Brainy_Web_App.png">
@@ -37,7 +37,7 @@
           alt="Brainy App"
           class="loading-image"
         />
-        <p class="app-name">KM - Brainy</p>
+        <p class="app-name">Neurocomrade</p>
         <div class="loading-bar-container">
           <div id="loadingBar" class="loading-bar"></div>
         </div>
@@ -48,8 +48,8 @@
     <!-- ==================== START SCREEN ==================== -->
     <div id="startScreen" class="screen">
       <div class="container">
-        <h1 class="title">Garden Learn & Play</h1>
-        <p class="subtitle">Help your plant grow by learning & playing!</p>
+        <h1 class="title">Neurocomrade</h1>
+        <p class="subtitle">Learn through play to help your plant grow!</p>
         <div class="name-input-box">
           <label for="userName">What's your name?</label>
           <input
@@ -68,7 +68,7 @@
           START PLAY
         </button>
         <button class="main-btn help-btn" onclick="game.showTutorial()">
-          📚 How to Play
+          HOW TO PLAY
         </button>
       </div>
     </div>
@@ -78,7 +78,7 @@
       <div class="modal-content tutorial-interactive">
         <button class="modal-close" onclick="document.getElementById('tutorialModal').style.display='none';">✕</button>
         <div id="tutorialStep" class="tutorial-step" data-step="0">
-          <div class="tutorial-header">🎮 Welcome to Learn & Play Kids!</div>
+          <div class="tutorial-header">🎮 Welcome to Neurocomrade!</div>
           <div class="tutorial-body">
             <p style="font-size: 24px; font-weight: bold; color: #fff;">Let's Learn Together!</p>
             <p style="font-size: 18px; margin: 20px 0; color: #fff;">Click NEXT to start your adventure 👇</p>
@@ -107,15 +107,15 @@
           <div class="tutorial-body">
             <div class="activity-card" style="background: #fecaca; margin: 10px 0; padding: 15px; border-radius: 10px; color: #333;">
               <p style="font-size: 18px; margin: 5px;"><strong>📝 Pick an Activity</strong></p>
-              <p style="font-size: 14px;">Choose from: Alphabet, Math, Rhyme & more!</p>
+              <p style="font-size: 14px; color: #333;">Choose from: Alphabet, Math, Rhyme & more!</p>
             </div>
             <div class="activity-card" style="background: #bfdbfe; margin: 10px 0; padding: 15px; border-radius: 10px; color: #333;">
               <p style="font-size: 18px; margin: 5px;"><strong>🎮 Answer Questions</strong></p>
-              <p style="font-size: 14px;">Each activity has 5 fun questions!</p>
+              <p style="font-size: 14px; color: #333;">Each activity has 5 fun questions!</p>
             </div>
             <div class="activity-card" style="background: #d1fae5; margin: 10px 0; padding: 15px; border-radius: 10px; color: #333;">
               <p style="font-size: 18px; margin: 5px;"><strong>⭐ Earn Points</strong></p>
-              <p style="font-size: 14px;">Get points for each correct answer!</p>
+              <p style="font-size: 14px; color: #333;">Get points for each correct answer!</p>
             </div>
           </div>
           <div class="tutorial-buttons">
@@ -182,16 +182,16 @@
           <div class="tutorial-header">⭐ Tips to Level Up!</div>
           <div class="tutorial-body">
             <div style="background: #fef3c7; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #f59e0b; color: #333;">
-              <p style="font-size: 16px; margin: 5px;"><strong>💡 Tip #1:</strong> Each activity = 5 questions</p>
+              <p style="font-size: 16px; margin: 5px; color: #333;"><strong>💡 Tip #1:</strong> Each activity = 5 questions</p>
             </div>
             <div style="background: #dbeafe; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #3b82f6; color: #333;">
-              <p style="font-size: 16px; margin: 5px;"><strong>💡 Tip #2:</strong> Get all answers right = max points! 🎯</p>
+              <p style="font-size: 16px; margin: 5px; color: #333;"><strong>💡 Tip #2:</strong> Get all answers right = max points! 🎯</p>
             </div>
             <div style="background: #dcfce7; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #10b981; color: #333;">
-              <p style="font-size: 16px; margin: 5px;"><strong>💡 Tip #3:</strong> Play activities many times!</p>
+              <p style="font-size: 16px; margin: 5px; color: #333;"><strong>💡 Tip #3:</strong> Play activities many times!</p>
             </div>
             <div style="background: #fecaca; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #ef4444; color: #333;">
-              <p style="font-size: 16px; margin: 5px;"><strong>💡 Tip #4:</strong> No pressure - have FUN! 🎉</p>
+              <p style="font-size: 16px; margin: 5px; color: #333;"><strong>💡 Tip #4:</strong> No pressure - have FUN! 🎉</p>
             </div>
           </div>
           <div class="tutorial-buttons">
@@ -347,6 +347,14 @@
           >
             <span class="emoji">📦</span>
             <span class="label">Category</span>
+          </button>
+          <button
+            class="activity-btn"
+            onclick="game.startActivity('animals')"
+            title="Animal Sounds"
+          >
+            <span class="emoji">🐾</span>
+            <span class="label">Animals</span>
           </button>
         </div>
 
